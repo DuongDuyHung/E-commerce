@@ -11,10 +11,8 @@ import { RiEyeFill, RiEyeOffFill } from 'react-icons/ri';
 
 import CopyRight from '../../Components/CopyRight/CopyRight'
 
-
-
 const Login = () => {
-  const [credentials, setCredentials] = useState({ email: "", password: "" })
+  const [credentials, setCredentials] = useState({ username: "", password: "" })
   const [showPassword, setShowPassword] = useState(false);
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
@@ -24,34 +22,35 @@ const Login = () => {
   const handleOnChange = (e) => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value })
   }
+
   useEffect(() => {
     let auth = localStorage.getItem('Authorization');
     if (auth) {
       navigate("/")
     }
   }, [])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    let emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     try {
-      if (!credentials.email && !credentials.password) {
+      if (!credentials.username || !credentials.password) {
         toast.error("All fields are required", { autoClose: 500, theme: 'colored' })
       }
-      else if (!emailRegex.test(credentials.email)) {
-        toast.error("Please enter a valid email", { autoClose: 500, theme: 'colored' })
-      }
       else if (credentials.password.length < 5) {
-        toast.error("Please enter valid password", { autoClose: 500, theme: 'colored' })
+        toast.error("Please enter a valid password", { autoClose: 500, theme: 'colored' })
       }
-      else if (credentials.email && credentials.password) {
-        const sendAuth = await axios.post(`${process.env.REACT_APP_LOGIN}`, { email: credentials.email, password: credentials.password })
+      else {
+        const sendAuth = await axios.post(`${"http://localhost:3000/auth/login"}`, { 
+          username: credentials.username, 
+          password: credentials.password 
+        })
         const receive = await sendAuth.data
         if (receive.success === true) {
           toast.success("Login Successfully", { autoClose: 500, theme: 'colored' })
           localStorage.setItem('Authorization', receive.authToken)
           navigate('/')
         }
-        else{
+        else {
           toast.error("Something went wrong, Please try again", { autoClose: 500, theme: 'colored' })
           navigate('/')
         }
@@ -62,9 +61,7 @@ const Login = () => {
         toast.error(error.response.data.error[0].msg, { autoClose: 500, theme: 'colored' })
         : toast.error(error.response.data.error, { autoClose: 500, theme: 'colored' })
     }
-
   }
-
 
   return (
     <Container component="main" maxWidth="xs">
@@ -88,12 +85,12 @@ const Login = () => {
             margin="normal"
             required
             fullWidth
-            id="email"
-            label="Email Address"
-            value={credentials.email}
-            name='email'
+            id="username"
+            label="Username"
+            value={credentials.username}
+            name='username'
             onChange={handleOnChange}
-            autoComplete="email"
+            autoComplete="username"
             autoFocus
           />
           <TextField
@@ -108,13 +105,12 @@ const Login = () => {
             id="password"
             InputProps={{
               endAdornment: (
-                <InputAdornment position="end" onClick={handleClickShowPassword} sx={{cursor:'pointer'}}>
+                <InputAdornment position="end" onClick={handleClickShowPassword} sx={{ cursor: 'pointer' }}>
                   {showPassword ? <RiEyeFill /> : <RiEyeOffFill />}
                 </InputAdornment>
               )
             }}
             autoComplete="current-password"
-
           />
           <FormControlLabel
             control={<Checkbox value="remember" color="primary" />}

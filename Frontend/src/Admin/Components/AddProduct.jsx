@@ -1,236 +1,213 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react';
 import {
-    Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Grid, TextField, Typography, InputLabel, MenuItem, FormControl, Select, 
+    Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Grid, TextField, Typography, InputLabel, MenuItem, FormControl, Select,
 } from '@mui/material';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import { Transition } from '../../Constants/Constant';
 import { MdOutlineCancel, MdProductionQuantityLimits } from 'react-icons/md';
 
-const AddProduct = ({ getProductInfo, data }) => {
-    // const [age, setAge] = useState('');
-
-    // const handleChange = (event) => {
-    //     setAge(event.target.value);
-    // };
+const AddProduct = ({ getProductInfo }) => {
     const [open, setOpen] = useState(false);
-
-    let authToken = localStorage.getItem("Authorization")
+    const [categories, setCategories] = useState([]); // Lưu danh sách category từ backend
     const [productInfo, setProductInfo] = useState({
         name: "",
-        image: "",
         price: "",
         rating: "",
         category: "",
-        type: "",
         description: "",
         author: "",
         brand: ""
     });
-    // const [productInfo, setCredentials] = useState({ firstName: "", lastName: '', email: "", phoneNumber: '', password: "" })
-    const handleOnchange = (e) => {
-        setProductInfo({ ...productInfo, [e.target.name]: e.target.value })
-    }
-    const handleClickOpen = () => {
-        setOpen(true);
-    };
+    const [imageFile, setImageFile] = useState(null); // Lưu file ảnh
 
-    const handleClose = () => {
-        setOpen(false);
-    };
-    const handleSubmit = async (e) => {
-        e.preventDefault()
+    const authToken = localStorage.getItem("Authorization");
+
+    // Lấy danh sách category từ backend
+    const fetchCategories = async () => {
         try {
-            if (!productInfo.name && !productInfo.image && !productInfo.price && !productInfo.rating && !productInfo.category && !productInfo.type && !productInfo.description) {
-                toast.error("Please Fill the all Fields", { autoClose: 500, theme: 'colored' })
-            }
-            else if (productInfo.rating < 0 || productInfo.rating > 5) {
-                toast.error("Please add valid rating", { autoClose: 500, theme: 'colored' })
+            const { data } = await axios.get("http://localhost:3000/categories");
+            setCategories(data); // Lưu danh sách category vào state
+        } catch (error) {
+            console.error("Error fetching categories:", error.response?.data || error.message);
+            toast.error("Failed to load categories", { autoClose: 500, theme: 'colored' });
+        }
+    };
 
+    useEffect(() => {
+        fetchCategories(); // Gọi API khi component được mount
+    }, []);
+
+    // Xử lý thay đổi input
+    const handleOnChange = (e) => {
+        setProductInfo({ ...productInfo, [e.target.name]: e.target.value });
+    };
+
+    // Xử lý chọn ảnh
+    const handleImageChange = (e) => {
+        setImageFile(e.target.files[0]); // Lưu file ảnh vào state
+    };
+
+    // Upload ảnh lên backend
+    const uploadImage = async () => {
+        if (!imageFile) return null; // Không có file ảnh, trả về null
+        const formData = new FormData();
+        formData.append('image', imageFile);
+
+        try {
+            const { data } = await axios.post("http://localhost:3000/api/upload", formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            return data.imageUrl; // Trả về URL của ảnh đã upload
+        } catch (error) {
+            console.error("Error uploading image:", error.response?.data || error.message);
+            toast.error("Failed to upload image", { autoClose: 500, theme: 'colored' });
+            return null;
+        }
+    };
+
+    // Gửi dữ liệu sản phẩm mới lên backend
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            // Kiểm tra các trường bắt buộc
+            if (!productInfo.name || !productInfo.price || !productInfo.rating || !productInfo.category || !productInfo.description) {
+                toast.error("Please fill in all fields", { autoClose: 500, theme: 'colored' });
+                return;
             }
-            else {
-                const { data } = await axios.post(`${process.env.REACT_APP_ADMIN_ADD_PRODUCT}`,
-                    {
-                        name: productInfo.name,
-                        brand: productInfo.brand,
-                        price: productInfo.price,
-                        category: productInfo.category,
-                        image: productInfo.image,
-                        rating: productInfo.rating,
-                        type: productInfo.type,
-                        author: productInfo.author,
-                        description: productInfo.description,
-                    }, {
-                    headers: {
-                        'Authorization': authToken
-                    }
-                })
+
+            if (productInfo.rating < 0 || productInfo.rating > 5) {
+                toast.error("Please add a valid rating (0-5)", { autoClose: 500, theme: 'colored' });
+                return;
+            }
+
+            // Upload ảnh trước khi gửi dữ liệu sản phẩm
+            const imageUrl = await uploadImage();
+            if (!imageUrl) {
+                toast.error("Please upload an image before submitting", { autoClose: 500, theme: 'colored' });
+                return;
+            }
+
+            const { data } = await axios.post("http://localhost:3000/products", {
+                name: productInfo.name,
+                brand: productInfo.brand,
+                price: productInfo.price,
+                category: productInfo.category,
+                imageUrl: imageUrl, // Sử dụng URL ảnh từ backend
+                rating: productInfo.rating,
+                author: productInfo.author,
+                description: productInfo.description,
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+
+            if (data.success) {
+                toast.success("Product added successfully", { autoClose: 500, theme: 'colored' });
+                getProductInfo(); // Cập nhật danh sách sản phẩm
+                setProductInfo({
+                    name: "",
+                    price: "",
+                    rating: "",
+                    category: "",
+                    description: "",
+                    author: "",
+                    brand: ""
+                });
+                setImageFile(null); // Reset file ảnh
                 setOpen(false);
-                if (data === true) {
-                    getProductInfo()
-                    toast.success("Product added successfully", { autoClose: 500, theme: 'colored' })
-                    setProductInfo({
-                        name: "",
-                        image: "",
-                        price: "",
-                        rating: "",
-                        category: "",
-                        type: "",
-                        description: "",
-                        author: "",
-                        brand: ""
-                    });
-                }
-                else {
-                    toast.error("Some thing went wrong", { autoClose: 500, theme: 'colored' })
-                }
+            } else {
+                toast.error(data.message || "Something went wrong", { autoClose: 500, theme: 'colored' });
             }
         } catch (error) {
-            toast.error(error.response.data.error, { autoClose: 500, theme: 'colored' })
+            console.error("Error adding product:", error.response?.data || error.message);
+            toast.error(error.response?.data?.message || "An error occurred", { autoClose: 500, theme: 'colored' });
         }
+    };
 
-    }
-    const productFilter = []
-
-    if (productInfo.type === 'book') {
-        productFilter.push('scifi', 'business', 'mystery', 'cookbooks', 'accessories')
-    }
-    else if (productInfo.type === 'cloths') {
-        productFilter.push('men', 'women')
-    }
-    else if (productInfo.type === 'shoe') {
-        productFilter.push('running', 'football', 'formal', 'casual')
-    }
-    else if (productInfo.type === 'electronics') {
-        productFilter.push('monitor', 'ssd', 'hdd')
-    }
-    else {
-        productFilter.push('all')
-
-    }
-    const typeDropdown = ['book', 'cloths', 'shoe', 'electronics'];
-    const shoeBrand = ['adidas', 'hushpuppies', 'nike', 'reebok', 'vans']
-
+    // Dropdown dữ liệu
+    const shoeBrand = ['adidas', 'hushpuppies', 'nike', 'reebok', 'vans'];
 
     return (
         <>
-            <Box sx={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', margin: "20px 0" }} >
-                <Typography variant='h6' textAlign='center' color="#1976d2" fontWeight="bold">Add new product </Typography>
-                <Button variant='contained' endIcon={<MdProductionQuantityLimits />} onClick={handleClickOpen}>Add</Button>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: "20px 0" }}>
+                <Typography variant='h6' textAlign='center' color="#1976d2" fontWeight="bold">Add New Product</Typography>
+                <Button variant='contained' endIcon={<MdProductionQuantityLimits />} onClick={() => setOpen(true)}>Add</Button>
             </Box>
             <Divider sx={{ mb: 5 }} />
             <Dialog
                 open={open}
-                onClose={handleClose}
+                onClose={() => setOpen(false)}
                 keepMounted
                 TransitionComponent={Transition}>
-                <DialogTitle sx={{ textAlign: "center", fontWeight: 'bold', color: "#1976d2" }}> Add new product</DialogTitle>
+                <DialogTitle sx={{ textAlign: "center", fontWeight: 'bold', color: "#1976d2" }}>Add New Product</DialogTitle>
                 <DialogContent>
                     <Box sx={{ mt: 2 }}>
                         <form onSubmit={handleSubmit}>
                             <Grid container spacing={2}>
-                                <Grid item xs={12} >
-                                    <TextField label="Name" name='name' value={productInfo.name} onChange={handleOnchange} variant="outlined" fullWidth />
+                                <Grid item xs={12}>
+                                    <TextField label="Name" name='name' value={productInfo.name} onChange={handleOnChange} variant="outlined" fullWidth required />
                                 </Grid>
-                                <Grid item xs={12} sm={6} >
+                                <Grid item xs={12} sm={6}>
                                     <FormControl fullWidth>
-                                        <InputLabel id="demo-simple-select-label">Product Type</InputLabel>
+                                        <InputLabel id="category-select-label">Product Category</InputLabel>
                                         <Select
-                                            labelId="demo-simple-select-label"
-                                            id="demo-simple-select"
-                                            value={productInfo.type}
-                                            label="Product Type"
-                                            name='type'
-                                            onChange={handleOnchange}
-                                        >
-                                            {typeDropdown.map(item =>
-                                                <MenuItem value={item} key={item}>{item}</MenuItem>
-                                            )}
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-
-                                <Grid item xs={12} sm={6} >
-                                    <FormControl fullWidth>
-                                        <InputLabel id="demo-simple-select-label">Product Category</InputLabel>
-                                        <Select
-                                            labelId="demo-simple-select-label"
-                                            id="demo-simple-select"
+                                            labelId="category-select-label"
+                                            id="category-select"
                                             value={productInfo.category}
                                             label="Product Category"
                                             name='category'
-                                            onChange={handleOnchange}
+                                            onChange={handleOnChange}
+                                            required
                                         >
-                                            {productFilter.map(item =>
-                                                <MenuItem value={item} key={item}>{item}</MenuItem>
-                                            )}
+                                            {categories.map(category => (
+                                                <MenuItem value={category.name} key={category._id}>{category.name}</MenuItem>
+                                            ))}
                                         </Select>
                                     </FormControl>
                                 </Grid>
-                                {
-                                    productInfo.type === 'book' &&
-                                    <Grid item xs={12} >
-                                        <TextField label="Author" name='author' value={productInfo.author} onChange={handleOnchange} variant="outlined" required fullWidth />
-                                    </Grid>
-                                }
-                                {
-                                    productInfo.type === 'shoe' &&
-                                    <Grid item xs={12} >
-                                        <FormControl fullWidth>
-                                            <InputLabel id="demo-simple-select-label">Shoe Brand</InputLabel>
-                                            <Select
-                                                labelId="demo-simple-select-label"
-                                                id="demo-simple-select"
-                                                value={productInfo.brand}
-                                                label="Shoe Brand"
-                                                name='brand'
-                                                required
-                                                onChange={handleOnchange}
-                                            >
-                                                {shoeBrand.map(item =>
-                                                    <MenuItem value={item} key={item}>{item}</MenuItem>
-                                                )}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                }
-                                <Grid item xs={12} >
-                                    <TextField label="Image URL" name='image' value={productInfo.image} onChange={handleOnchange} variant="outlined" fullWidth />
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <TextField label="Price" name='price' value={productInfo.price} onChange={handleOnchange} variant="outlined" inputMode='numeric' fullWidth />
-                                </Grid>
-
-                                <Grid item xs={12} sm={6}>
-                                    <TextField label="Rating" name='rating' value={productInfo.rating} onChange={handleOnchange} variant="outlined" inputMode='numeric' fullWidth />
-                                </Grid>
-
-                                <Grid item xs={12} sx={{ margin: "10px auto" }}>
+                                <Grid item xs={12}>
                                     <TextField
-                                        id="filled-textarea"
-                                        value={productInfo.description} onChange={handleOnchange}
-                                        label="Description"
-                                        multiline
-                                        sx={{ width: "100%" }}
+                                        type="file"
+                                        onChange={handleImageChange}
                                         variant="outlined"
-                                        name='description'
                                         fullWidth
-
+                                        required
                                     />
                                 </Grid>
-
+                                <Grid item xs={12} sm={6}>
+                                    <TextField label="Price" name='price' value={productInfo.price} onChange={handleOnChange} variant="outlined" inputMode='numeric' fullWidth required />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField label="Rating" name='rating' value={productInfo.rating} onChange={handleOnChange} variant="outlined" inputMode='numeric' fullWidth required />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField
+                                        label="Description"
+                                        name='description'
+                                        value={productInfo.description}
+                                        onChange={handleOnChange}
+                                        variant="outlined"
+                                        multiline
+                                        fullWidth
+                                        required
+                                    />
+                                </Grid>
                             </Grid>
-                            <DialogActions sx={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', mt: 2 }}>
-                                <Button fullWidth variant='contained' type='reset' color='error' onClick={handleClose} endIcon={<MdOutlineCancel />}>Cancel</Button>
-                                <Button type="submit" fullWidth variant="contained" endIcon={<MdProductionQuantityLimits />}>Add</Button>
+                            <DialogActions sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                                <Button variant='contained' color='error' onClick={() => setOpen(false)} endIcon={<MdOutlineCancel />}>Cancel</Button>
+                                <Button type="submit" variant="contained" endIcon={<MdProductionQuantityLimits />}>Add</Button>
                             </DialogActions>
                         </form>
-                    </Box >
-
+                    </Box>
                 </DialogContent>
-            </Dialog >
+            </Dialog>
         </>
-    )
-}
+    );
+};
 
-export default AddProduct
+export default AddProduct;

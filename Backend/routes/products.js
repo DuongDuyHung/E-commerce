@@ -53,62 +53,109 @@ router.get('/:id', async function (req, res, next) {
 router.post('/', async function (req, res, next) {
     try {
         let body = req.body;
-        let category = await categorySchema.findOne({ name: body.category })
-        if (category) {
-            let newProduct = productSchema({
-                name: body.name,
-                price: body.price ? body.price : 1000,
-                quantity: body.quantity ? body.quantity : 10,
-                category: category._id,
-                slug: slugify(body.name, {
-                    lower: true
-                })
-            });
-            await newProduct.save()
-            res.status(200).send({
-                success: true,
-                data: newProduct
-            });
-        } else {
-            res.status(404).send({
+        console.log("Received body:", body);
+        
+        let imageUrl = body.imageUrl || ''; // Kiểm tra ảnh từ frontend
+        
+        if (!imageUrl) {
+            return res.status(400).send({
                 success: false,
-                message: "khong tim thay category"
-            })
+                message: "Image URL is missing"
+            });
         }
+        
+        console.log("Image URL:", imageUrl); // Đảm bảo URL được truyền về đúng
+        
+        let category = await categorySchema.findOne({ name: body.category });
+        if (!category) {
+            return res.status(404).send({
+                success: false,
+                message: "Category not found"
+            });
+        }
+        
+        console.log("Category found:", category); // Log category để kiểm tra _id
+        
+        let newProduct = new productSchema({
+            name: body.name,
+            price: body.price ? body.price : 1000,
+            quantity: body.quantity ? body.quantity : 10,
+            category: category._id,
+            slug: slugify(body.name, { lower: true }),
+            imgURL: imageUrl, // Lưu URL ảnh vào database
+        });
+        
+        console.log("New product object:", newProduct); // Log newProduct trước khi lưu
+        
+        await newProduct.save()
+            .then(result => {
+                console.log("Product saved:", result); // Log kết quả lưu vào database
+                res.status(200).send({
+                    success: true,
+                    data: result
+                });
+            })
+            .catch(error => {
+                console.error("Error saving product:", error); // Log lỗi khi lưu sản phẩm
+                res.status(500).send({
+                    success: false,
+                    message: error.message
+                });
+            });
     } catch (error) {
-        res.status(404).send({
+        console.error("Error occurred:", error); // Log toàn bộ lỗi
+        res.status(500).send({
             success: false,
             message: error.message
-        })
+        });
     }
 });
+
 
 router.put('/:id', async function (req, res, next) {
     try {
         let body = req.body;
-        let updatedObj = {}
+        let updatedObj = {};
+
+        // Cập nhật các trường cơ bản
         if (body.name) {
-            updatedObj.name = body.name
+            updatedObj.name = body.name;
         }
         if (body.quantity) {
-            updatedObj.quantity = body.quantity
+            updatedObj.quantity = body.quantity;
         }
         if (body.price) {
-            updatedObj.price = body.price
+            updatedObj.price = body.price;
         }
         if (body.category) {
-            updatedObj.category = body.category
+            let category = await categorySchema.findOne({ name: body.category });
+            if (!category) {
+                return res.status(404).send({
+                    success: false,
+                    message: "Category not found"
+                });
+            }
+            updatedObj.category = category._id;
         }
-        let updatedProduct = await productSchema.findByIdAndUpdate(req.params.id, updatedObj, { new: true })
+
+        // Cập nhật URL ảnh
+        if (body.imgURL) {
+            updatedObj.imgURL = body.imgURL;
+        }
+
+        console.log("Updated product object:", updatedObj); // Log đối tượng cập nhật
+
+        let updatedProduct = await productSchema.findByIdAndUpdate(req.params.id, updatedObj, { new: true });
         res.status(200).send({
             success: true,
             data: updatedProduct
         });
     } catch (error) {
-        res.status(404).send({
+        console.error("Error updating product:", error); // Log lỗi chi tiết
+        res.status(500).send({
             success: false,
             message: error.message
-        })
+        });
     }
 });
 router.delete('/:id', async function (req, res, next) {

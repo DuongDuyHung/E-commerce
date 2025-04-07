@@ -9,7 +9,8 @@ const constants = require('../utils/constants');
 /* GET users listing. */
 
 router.get('/',check_authentication,check_authorization(constants.MOD_PERMISSION), async function (req, res, next) {
-  console.log(req.headers.authorization);
+  console.log("Authorization header in backend:", req.headers.authorization); // Log token từ header
+  console.log("User from middleware:", req.user); // Log thông tin người dùng từ middleware
   let users = await userController.GetAllUser();
   CreateSuccessResponse(res, 200, users)
 });

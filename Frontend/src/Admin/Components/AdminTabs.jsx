@@ -12,6 +12,7 @@ import { FaShippingFast } from 'react-icons/fa'
 import { TbReportMoney } from 'react-icons/tb'
 import OrderTable from './Tables/OrderTable';
 import Widget from './Widget';
+import CategoryTable from './Tables/CategoryTable';
 
 
 function TabPanel(props) {
@@ -104,6 +105,7 @@ export default function BasicTabs({ user, setUser, getUser }) {
                     <Tab label={!isSmallScreen && "Users"} {...a11yProps(1)} iconPosition='start' icon={<CgProfile fontSize={20} />} />
                     <Tab label={!isSmallScreen && "Products"} {...a11yProps(2)} iconPosition='start' icon={<AiOutlineShoppingCart fontSize={20} />} />
                     <Tab label={!isSmallScreen && "Orders"} {...a11yProps(3)} iconPosition='start' icon={<FaShippingFast fontSize={20} />} />
+                    <Tab label={!isSmallScreen && "Categories"} {...a11yProps(4)} iconPosition='start' icon={<AiOutlineShoppingCart fontSize={20} />} />
                 </Tabs>
             </Box>
             <TabPanel value={value} index={0} >
@@ -124,6 +126,9 @@ export default function BasicTabs({ user, setUser, getUser }) {
             <TabPanel value={value} index={3}>
                 <OrderTable orders={paymentData} />
             </TabPanel>
+            <TabPanel value={value} index={4}>
+    <CategoryTable />
+</TabPanel>
         </Box >
     );
 }

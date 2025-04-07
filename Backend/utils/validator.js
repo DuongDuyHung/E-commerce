@@ -35,8 +35,8 @@ module.exports = {
         body("email").isEmail().withMessage(constants.VALIDATOR_ERROR_EMAIL)
     ],
     LoginValidator: [
-        body("username").isLength(options.username).withMessage("username hoac password sai"),
-        body("password").isStrongPassword(options.password).withMessage("username hoac password sai")
+        body("username").isLength(options.username).withMessage("username sai"),
+        body("password").isStrongPassword(options.password).withMessage("password sai")
     ]
 }
 // multer

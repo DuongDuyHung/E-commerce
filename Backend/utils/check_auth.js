@@ -4,11 +4,14 @@ let constants = require('../utils/constants')
 module.exports = {
     check_authentication: async function (req, res, next) {
         let token;
+        console.log("Headers:", req.headers); 
         if (!req.headers || !req.headers.authorization) {
             token = req.signedCookies.token;
+            console.log("Token from cookies:", token);
         } else {
             let authorizedtoken = req.headers.authorization;
-            if (!authorizedtoken.startsWith("Bearer")) {
+            console.log("Authorization header:", authorizedtoken);
+            if (authorizedtoken.startsWith("Bearer ")) {
                 token = authorizedtoken.split(" ")[1];
             } 
         }

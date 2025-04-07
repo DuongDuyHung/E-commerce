@@ -28,6 +28,7 @@ router.post('/', async function(req, res, next) {
         let body = req.body;
         let newCategory = categorySchema({
             name:body.name,
+            description: body.description || "", // Thêm description
             slug: slugify(body.name, {
                 lower: true
             })
@@ -51,6 +52,9 @@ router.put('/:id', async function(req, res, next) {
         let updatedObj = {}
         if(body.name){
             updatedObj.name = body.name
+        }
+        if (body.description) {
+            updatedObj.description = body.description; // Thêm description
         }
         let updatedCategory =  await categorySchema.findByIdAndUpdate(req.params.id,updatedObj,{new:true})
         res.status(200).send({
