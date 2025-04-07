@@ -46,7 +46,7 @@ function App() {
             <Route path='/update' element={<UpdateDetails />} />
             <Route path='/paymentsuccess' element={<PaymentSuccess />} />
             <Route path='/forgotpassword' element={<ForgotPasswordForm />} />
-            <Route path='/user/reset/:id/:token' element={<AddNewPassword />} />
+            <Route path="/auth/resetpassword/:token" element={<AddNewPassword />} />
 
             {/* Admin Routes */}
             <Route path="/admin/login" element={< AdminLogin />} />

@@ -7,7 +7,7 @@ let slugify = require('slugify')
 router.get('/', async function (req, res, next) {
     let query = req.query;
     console.log(query);
-    let objQuery = {};
+    let objQuery = {isDeleted: false };
     if (query.name) {
         objQuery.name = new RegExp(query.name, 'i')
     } else {
@@ -34,6 +34,33 @@ router.get('/', async function (req, res, next) {
         { path: 'category', select: 'name' }
     );
     res.send(products);
+});
+
+router.get('/categoryid', async function (req, res, next) {
+    let query = req.query;
+    let objQuery = { isDeleted: false }; // Chỉ lấy sản phẩm chưa bị xóa
+
+    if (query.category) {
+        let category = await categorySchema.findOne({ name: query.category });
+        if (category) {
+            objQuery.category = category._id; // Lọc theo ID của danh mục
+        } else {
+            return res.status(404).send({ success: false, message: "Category not found" });
+        }
+    }
+
+    try {
+        let products = await productSchema.find(objQuery).populate(
+            { path: 'category', select: 'name' }
+        );
+        res.status(200).send(products);
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        res.status(500).send({
+            success: false,
+            message: error.message,
+        });
+    }
 });
 
 router.get('/:id', async function (req, res, next) {

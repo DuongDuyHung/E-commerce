@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { Box } from '@mui/material';
 import { AiOutlineSearch } from 'react-icons/ai';
 import {
     Table,
@@ -18,6 +19,7 @@ import { Link } from 'react-router-dom';
 import AddProduct from '../AddProduct';
 import EditProduct from '../EditProduct'; // Import EditProduct component
 import { FaEdit, FaTrash } from 'react-icons/fa';
+import ImportProduct from '../ImportProduct';
 
 const ProductTable = () => {
     const [data, setData] = useState([]);
@@ -121,7 +123,11 @@ const ProductTable = () => {
                             }}
                         />
                     </Container>
-                    <AddProduct getProductInfo={fetchProducts} />
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+    <AddProduct getProductInfo={fetchProducts} />
+    <ImportProduct getProductInfo={fetchProducts} />
+</Box>
+
                     <Paper style={{ overflow: "auto", maxHeight: "500px" }}>
                         <TableContainer sx={{ maxHeight: '500px' }}>
                             <Table stickyHeader aria-label="sticky table">

@@ -67,7 +67,7 @@ router.post('/forgotpassword', async function (req, res, next) {
         user.resetPasswordToken = crypto.randomBytes(32).toString('hex');
         user.resetPasswordTokenExp = (new Date(Date.now() + 10 * 60 * 1000));
         await user.save();
-        let url = 'http://localhost:3000/auth/resetpassword/' + user.resetPasswordToken;
+        let url = 'http://localhost:3001/auth/resetpassword/' + user.resetPasswordToken;
         await mailer.sendMailForgotPassword(user.email, url);
         CreateSuccessResponse(res, 200, url)
     } catch (error) {

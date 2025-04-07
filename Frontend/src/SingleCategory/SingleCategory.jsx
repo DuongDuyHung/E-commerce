@@ -1,6 +1,6 @@
 import './singlecategory.css'
 import React, { useState, useEffect } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams,useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { Container } from '@mui/system'
 import { Box, Button, MenuItem, FormControl, Select } from '@mui/material'
@@ -18,16 +18,19 @@ const SingleCategory = () => {
     const [filterOption, setFilterOption] = useState('All')
     const [title, setTitle] = useState('All')
     const { cat } = useParams()
+    const navigate = useNavigate()
 
     useEffect(() => {
-        getCategoryProduct()
-        window.scroll(0, 0)
-    }, [])
+        getCategoryProduct(); // Gọi API lấy sản phẩm theo category
+        window.scroll(0, 0);
+    }, [cat]);
 
     const getCategoryProduct = async () => {
         try {
             setIsLoading(true)
-            const { data } = await axios.post(`${process.env.REACT_APP_PRODUCT_TYPE}`, { userType: cat })
+            const { data } = await axios.get(`http://localhost:3000/products/categoryid`, {
+                params: { category: cat }
+              });
             setIsLoading(false)
             setProductData(data)
 
@@ -87,6 +90,14 @@ const SingleCategory = () => {
     return (
         <>
             <Container maxWidth='xl' style={{ marginTop: 90, display: 'flex', justifyContent: "center", flexDirection: "column" }}>
+            <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={() => navigate(-1)} // Quay lại trang trước đó
+                    sx={{ marginBottom: 2 }}
+                >
+                    Quay lại
+                </Button>
                 < Box sx={{ minWidth: 140 }}>
                     <FormControl sx={{ width: 140 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, width: "80vw" }}>
@@ -107,13 +118,12 @@ const SingleCategory = () => {
                 </Box>
                 {loading}
                 <Container maxWidth='xl' style={{ marginTop: 10, display: "flex", justifyContent: 'center', flexWrap: "wrap", paddingBottom: 20, marginBottom: 30, width: '100%' }}>
-                    {productData.map(prod => (
-                        <Link to={`/Detail/type/${cat}/${prod._id}`} key={prod._id}>
-                            <ProductCard prod={prod} />
-
-                        </Link>
-                    ))}
-                </Container>
+    {productData.map(prod => (
+        <Link to={`/Detail/type/${cat}/${prod._id}`} key={prod._id}>
+            <ProductCard prod={prod} />
+        </Link>
+    ))}
+</Container>
             </Container >
             <CopyRight sx={{ mt: 8, mb: 10 }} />
         </>
