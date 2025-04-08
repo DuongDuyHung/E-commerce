@@ -51,23 +51,69 @@ const Cart = () => {
 
     useEffect(() => {
         if (setProceed) {
-            setTotal(cart.reduce((acc, curr) => (acc + ((curr.productId?.price * curr.quantity) + shippingCoast)), 0))
+            console.log("Cart state:", cart);
+            const subtotal = calculateSubtotal();
+            console.log("Calculated subtotal:", subtotal);
+            setTotal(subtotal + shippingCoast);
         }
+    }, [cart]);
 
-    }, [cart])
+    const calculateSubtotal = () => {
+        let total = 0;
+        cart.forEach(item => {
+            if (item.product && item.product.price) {
+                total += item.product.price * item.quantity;
+            }
+        });
+        return total;
+    };
 
     const getCart = async () => {
         if (setProceed) {
-            const { data } = await axios.get(`${process.env.REACT_APP_GET_CART}`,
-                {
+            const userId = localStorage.getItem('userId'); 
+            if (!userId) {
+                toast.error("User ID not found. Please log in again.", { autoClose: 500, theme: 'colored' });
+                navigate('/login');
+                return;
+            }
+    
+            try {
+                const { data } = await axios.get(`http://localhost:3000/cart/${userId}`, {
                     headers: {
-                        'Authorization': authToken
+                        'Authorization': `Bearer ${authToken}`
                     }
-                })
-            setCart(data);
+                });
+    
+                // ✅ Chỉ lấy cart items
+                setCart(data.cart?.items || []);
+                console.log("Cart data: ", data.cart?.items)
+            } catch (err) {
+                toast.error("Failed to fetch cart", { autoClose: 500, theme: 'colored' });
+                console.error(err);
+            }
         }
-
     }
+
+    const updateQuantity = async (productId, quantity) => {
+        try {
+            const userId = localStorage.getItem('userId');
+            await axios.put(`http://localhost:3000/cart/update`, {
+                productId,
+                quantity,
+                userId
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+    
+            // Gọi lại API giỏ hàng sau khi cập nhật thành công để đảm bảo data luôn mới
+            getCart(); // Cập nhật lại cart từ server
+        } catch (error) {
+            toast.error("Failed to update quantity");
+            console.error(error);
+        }
+    };
     const handleClose = () => {
         setOpenAlert(false);
         navigate('/')
@@ -88,19 +134,25 @@ const Cart = () => {
     const removeFromCart = async (product) => {
         if (setProceed) {
             try {
-                const response = await axios.delete(`${process.env.REACT_APP_DELETE_CART}/${product._id}`, {
+                const productId = product.productId?._id || product.product?._id; // fallback nếu productId không tồn tại
+    
+                await axios.delete(`http://localhost:3000/cart/remove`, {
                     headers: {
-                        'Authorization': authToken
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    data: {
+                        userId: localStorage.getItem('userId'),
+                        productId: productId
                     }
-                })
-                toast.success("Removed From Cart", { autoClose: 500, theme: 'colored' })
-                setCart(cart.filter(c => c.productId._id !== product.productId._id))
+                });
+    
+                toast.success("Removed From Cart", { autoClose: 500, theme: 'colored' });
+                setCart(cart.filter(c => (c.productId?._id || c.product?._id) !== productId));
             } catch (error) {
-                toast.error("Something went wrong", { autoClose: 500, theme: 'colored' })
-
+                toast.error("Something went wrong", { autoClose: 500, theme: 'colored' });
             }
         }
-    }
+    };
     const proceedToCheckout = async () => {
         if (cart.length <= 0) {
             toast.error("Please add items in cart to proceed", { autoClose: 500, theme: 'colored' })
@@ -133,7 +185,7 @@ const Cart = () => {
                         {
                             cart.length > 0 &&
                             cart.map(product =>
-                                <CartCard product={product} removeFromCart={removeFromCart} key={product._id} />
+                                <CartCard product={product} removeFromCart={removeFromCart} updateQuantity={updateQuantity} key={product._id} />
 
                             )}
                     </Box>
@@ -141,7 +193,12 @@ const Cart = () => {
                     {
                         cart.length > 0 &&
                         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                            <OrderSummary proceedToCheckout={proceedToCheckout} total={total} shippingCoast={shippingCoast} />
+                          <OrderSummary
+  proceedToCheckout={proceedToCheckout}
+  total={total}
+  shippingCoast={shippingCoast}
+  subtotal={total - shippingCoast}
+/>
                         </Box>
                     }
 

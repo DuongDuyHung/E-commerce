@@ -1,51 +1,130 @@
-import { Button, Card, CardActionArea, CardActions, CardContent, Rating, Tooltip, Typography } from '@mui/material'
-import { Box } from '@mui/system'
-import { Link } from 'react-router-dom'
-import { AiFillDelete } from 'react-icons/ai'
-import styles from './CartCard.module.css'
-const CartCard = ({ product, removeFromCart }) => {
+import React, { useEffect, useState } from 'react';
+import { Button, Typography, Tooltip } from '@mui/material';
+import { Box } from '@mui/system';
+import { AiFillDelete } from 'react-icons/ai';
+import axios from 'axios';
 
+const CartCard = ({ product, removeFromCart,updateQuantity }) => {
+    const [productDetails, setProductDetails] = useState(null);
+    const [quantity, setQuantity] = useState(product.quantity); // Quản lý số lượng sản phẩm
+    const [totalPrice, setTotalPrice] = useState(0); // Quản lý giá tạm thời
+
+    // Gọi API để lấy thông tin chi tiết sản phẩm
+    useEffect(() => {
+        const fetchProductDetailsFromCart = async () => {
+            try {
+                const userId = localStorage.getItem('userId'); // Lấy userId từ localStorage
+                if (!userId) {
+                    console.error('User ID not found');
+                    return;
+                }
+
+                const productId = typeof product.product === 'string' ? product.product : product.product._id;
+
+                const { data } = await axios.get(`http://localhost:3000/products/cart/${productId}`, {
+                    params: { userId },
+                });
+                setProductDetails(data.data); // Lưu thông tin sản phẩm vào state
+                setTotalPrice(data.data.price * product.quantity); // Tính giá tạm thời ban đầu
+            } catch (error) {
+                console.error('Error fetching product details:', error);
+            }
+        };
+
+        if (product.product) {
+            fetchProductDetailsFromCart();
+        }
+    }, [product.product]);
+
+    // Hàm xử lý tăng số lượng
+    const handleIncrease = () => {
+        const newQuantity = quantity + 1;
+        setQuantity(newQuantity);
+        setTotalPrice(productDetails.price * newQuantity); 
+        updateQuantity(product.productId?._id || product.product?._id, newQuantity);
+    };
+
+    // Hàm xử lý giảm số lượng
+    const handleDecrease = () => {
+        if (quantity > 1) {
+            const newQuantity = quantity - 1;
+            setQuantity(newQuantity);
+            setTotalPrice(productDetails.price * newQuantity); // Cập nhật giá tạm thời
+            updateQuantity(product.productId?._id || product.product?._id, newQuantity);
+        }
+    };
+
+    
+
+    if (!productDetails) {
+        return <Typography>Loading...</Typography>; // Hiển thị trạng thái tải
+    }
 
     return (
-        <Card className={styles.main_cart}>
-            <Link to={`/Detail/type/${product?.productId?.type}/${product?.productId?._id}`}>
-            <CardActionArea className={styles.card_action} >
-                <Box className={styles.img_box}  >
-                        <img alt={product?.productId?.name} loading='lazy' src={product?.productId?.image} className={styles.img} />
-                </Box>
-                <CardContent>
-                    <Typography gutterBottom variant="h6" sx={{ textAlign: "center" }}>
-                        {product?.productId?.name.length > 20 ? product?.productId?.name.slice(0, 20) + '...' : product?.productId?.name}
-                    </Typography>
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            // background: 'red',
-                            justifyContent:'center',
-                            '& > *': {
-                                m: 1,
-                            },
-                        }}
+        <Box
+            sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderBottom: '1px solid #ddd',
+                padding: '10px 0',
+            }}
+        >
+            {/* Hình ảnh sản phẩm */}
+            <Box sx={{ flex: '0 0 100px', marginRight: '20px' }}>
+                <img
+                    alt={productDetails.name}
+                    loading="lazy"
+                    src={`http://localhost:3000${productDetails.imgURL}`}
+                    style={{ width: '100%', height: 'auto', borderRadius: '5px' }}
+                />
+            </Box>
+
+            {/* Thông tin sản phẩm */}
+            <Box sx={{ flex: '1', marginRight: '20px' }}>
+                <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                    {productDetails.name}
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                    {productDetails.type}
+                </Typography>
+            </Box>
+
+            {/* Số lượng */}
+            <Box sx={{ display: 'flex', alignItems: 'center', marginRight: '20px' }}>
+                <Button variant="outlined" size="small" sx={{ minWidth: '30px' }} onClick={handleDecrease}>
+                    -
+                </Button>
+                <Typography variant="body2" sx={{ margin: '0 10px' }}>
+                    {quantity}
+                </Typography>
+                <Button variant="outlined" size="small" sx={{ minWidth: '30px' }} onClick={handleIncrease}>
+                    +
+                </Button>
+            </Box>
+
+            {/* Giá sản phẩm */}
+            <Box sx={{ marginRight: '20px' }}>
+                <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                    {totalPrice} đồng
+                </Typography>
+            </Box>
+
+            {/* Xóa sản phẩm */}
+            <Box>
+                <Tooltip title="Remove From Cart">
+                    <Button
+                        variant="contained"
+                        color="error"
+                        onClick={() => removeFromCart(product)}
+                        sx={{ minWidth: '30px', padding: '5px' }}
                     >
-                        {product.quantity && <Button>  <Typography variant='body2' color='black'>  Quantity {' ' + product.quantity} </Typography></Button>}
-                        <Typography gutterBottom variant="h6" sx={{ textAlign: "center" }}>
-                            ₹{product?.productId?.price}
-                        </Typography>
-                    </Box>
-                </CardContent>
-            </CardActionArea>
-            </Link>
-            <CardActions style={{ display: "flex", justifyContent: "space-between", width: '100%' }}>
-                <Tooltip
-                    title='Remove From Cart'>
-                    <Button className='all-btn' sx={{ width: 10, borderRadius: '30px' }} variant='contained' color='error' onClick={() => removeFromCart(product)}>
-                        <AiFillDelete style={{ fontSize: 15 }} />
+                        <AiFillDelete />
                     </Button>
                 </Tooltip>
-                <Typography> <Rating name="read-only" value={Math.round(product?.productId?.rating)} readOnly  precision={0.5}/></Typography>
-            </CardActions>
-        </Card >
-    )
-}
+            </Box>
+        </Box>
+    );
+};
 
-export default CartCard
+export default CartCard;

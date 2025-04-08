@@ -26,6 +26,7 @@ const getWishList = async (setProceed, setWishlistData, authToken) => {
 const handleLogOut = (setProceed, toast, navigate, setOpenAlert) => {
     if (setProceed) {
         localStorage.removeItem('Authorization')
+        localStorage.removeItem('userId');
         toast.success("Logout Successfully", { autoClose: 500, theme: 'colored' })
         navigate('/')
         setOpenAlert(false)

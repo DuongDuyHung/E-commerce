@@ -45,9 +45,11 @@ const Login = () => {
           password: credentials.password 
         })
         const receive = await sendAuth.data
+        console.log("LOGIN RESPONSE", receive);
         if (receive.success === true) {
           toast.success("Login Successfully", { autoClose: 500, theme: 'colored' })
-          localStorage.setItem('Authorization', receive.authToken)
+          localStorage.setItem('Authorization', receive.data.authToken);
+          localStorage.setItem('userId', receive.data.userId);
           navigate('/')
         }
         else {

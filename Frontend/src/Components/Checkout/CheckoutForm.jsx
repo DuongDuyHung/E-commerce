@@ -1,5 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { Button, Container, Dialog, DialogActions, DialogContent, Grid, TextField, Typography } from '@mui/material'
+import {
+    Button, Container, Dialog, DialogActions,
+    DialogContent, Grid, TextField, Typography
+} from '@mui/material'
 import styles from './Chekout.module.css'
 import { BsFillCartCheckFill } from 'react-icons/bs'
 import { MdUpdate } from 'react-icons/md'
@@ -12,71 +15,95 @@ import CopyRight from '../CopyRight/CopyRight'
 import { Transition, handleClose } from '../../Constants/Constant'
 import { AiFillCloseCircle, AiOutlineSave } from 'react-icons/ai'
 
+
 const CheckoutForm = () => {
     const { cart } = useContext(ContextFunction)
-    const [userData, setUserData] = useState([])
-    const [openAlert, setOpenAlert] = useState(false);
-
-    let authToken = localStorage.getItem('Authorization')
-    let setProceed = authToken ? true : false
-    let navigate = useNavigate()
-    let totalAmount = sessionStorage.getItem('totalAmount')
-
-    useEffect(() => {
-        if (setProceed) {
-            getUserData()
-
-        }
-        else {
-            navigate('/')
-        }
-
-    }, [])
+    const [userData, setUserData] = useState(null)
+    const [openAlert, setOpenAlert] = useState(false)
+    const [paymentMethod, setPaymentMethod] = useState('cash')
+    const authToken = localStorage.getItem('Authorization')
+    const navigate = useNavigate()
+    const totalAmount = sessionStorage.getItem('totalAmount') || 0
 
     const [userDetails, setUserDetails] = useState({
-        firstName: '',
-        lastName: '',
+        username: '',
+        email: '',
         phoneNumber: '',
-        userEmail: '',
-        address: '',
-        zipCode: '',
-        city: '',
-        userState: '',
-
+        address: ''
     })
+
+    useEffect(() => {
+        if (!authToken) {
+            navigate('/')
+        } else {
+            getUserData()
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
     const getUserData = async () => {
         try {
-            const { data } = await axios.get(`${process.env.REACT_APP_GET_USER_DETAILS}`, {
-                headers: {
-                    'Authorization': authToken
-                }
+            const userId = localStorage.getItem("userId")
+            const response = await axios.get(`http://localhost:3000/users/${userId}`, {
+                headers: { 'Authorization': `Bearer ${authToken}` }
             })
-            setUserData(data);
-            if (!data.address || !data.city || !data.zipCode || !data.userState) {
-                setOpenAlert(true);
-                console.log(1);
-              }
-            userDetails.firstName = data.firstName
-            userDetails.lastName = data.lastName
-            userDetails.userEmail = data.email
-            userDetails.phoneNumber = data.phoneNumber
-            userDetails.address = data.address
-            userDetails.zipCode = data.zipCode
-            userDetails.city = data.city
-            userDetails.userState = data.userState
-        } catch (error) {
-            console.log(error);
-        }
+            const user = response.data.data
 
+            setUserData(user)
+            setUserDetails({
+                username: user.username || '',
+                email: user.email || '',
+                phoneNumber: user.phoneNumber || '',
+                address: user.address || ''
+            })
+
+            if (!user.phoneNumber || !user.address) {
+                setOpenAlert(true)
+            }
+        } catch (error) {
+            console.error('Lỗi khi lấy thông tin người dùng:', error)
+            toast.error("Không thể lấy thông tin người dùng", { autoClose: 1000 })
+        }
     }
 
     const checkOutHandler = async (e) => {
         e.preventDefault()
 
-        if (!userDetails.firstName || !userDetails.lastName || !userDetails.userEmail || !userDetails.phoneNumber || !userDetails.address || !userDetails.zipCode || !userDetails.city || !userDetails.userState) {
-            toast.error("Please fill all fields", { autoClose: 500, theme: "colored" })
+        const { username, email, phoneNumber, address } = userDetails
+
+        if (!username || !email || !phoneNumber || !address) {
+            toast.error("Vui lòng điền đầy đủ thông tin", { autoClose: 1000 })
+            return
         }
-        else {
+
+        if (paymentMethod === 'cash') {
+            try {
+                await axios.post(`http://localhost:3000/order/create`, {
+                    userId: userData._id,
+                    totalPrice: totalAmount,
+                    productDetails: cart,
+                    userDetails,
+                    paymentMethod: 'cash'
+                }, {
+                    headers: { Authorization: `Bearer ${authToken}` }
+                })
+        
+                // 🧹 Gọi API để xóa toàn bộ giỏ hàng
+                await axios.delete(`http://localhost:3000/cart/clear/${userData._id}`, {
+                    headers: { Authorization: `Bearer ${authToken}` }
+                })
+        
+                toast.success("Đặt hàng thành công! Thanh toán khi nhận hàng.", { autoClose: 1000 })
+                 // 🧹 Gọi API để xóa toàn bộ giỏ hàng
+                 await axios.delete(`http://localhost:3000/cart/clear/${userData._id}`, {
+                    headers: { Authorization: `Bearer ${authToken}` }
+                })
+                navigate('/')
+            } catch (error) {
+                console.error("Lỗi khi đặt hàng:", error)
+                toast.error("Đặt hàng thất bại!", { autoClose: 1000 })
+            }
+        } else {
             try {
                 const { data: { key } } = await axios.get(`${process.env.REACT_APP_GET_KEY}`)
                 const { data } = await axios.post(`${process.env.REACT_APP_GET_CHECKOUT}`, {
@@ -84,34 +111,36 @@ const CheckoutForm = () => {
                     productDetails: JSON.stringify(cart),
                     userId: userData._id,
                     userDetails: JSON.stringify(userDetails),
+                    paymentMethod: 'online',
                 })
 
                 const options = {
-                    key: key,
+                    key,
                     amount: totalAmount,
                     currency: "INR",
-                    name: userData.firstName + ' ' + userData.lastName,
-                    description: "Payment",
+                    name: username,
+                    description: "Online Payment",
                     image: profile,
                     order_id: data.order.id,
                     callback_url: process.env.REACT_APP_GET_PAYMENTVERIFICATION,
                     prefill: {
-                        name: userData.firstName + ' ' + userData.lastName,
-                        email: userData.email,
-                        contact: userData.phoneNumber
+                        name: username,
+                        email,
+                        contact: phoneNumber
                     },
                     notes: {
-                        "address": `${userData.address} ${userData.city} ${userData.zipCode} ${userData.userState}`
+                        address
                     },
                     theme: {
-                        "color": "#1976d2"
-                    },
+                        color: "#1976d2"
+                    }
+                }
 
-                };
-                const razor = new window.Razorpay(options);
-                razor.open();
+                const razor = new window.Razorpay(options)
+                razor.open()
             } catch (error) {
-                console.log(error);
+                console.error("Lỗi khi xử lý thanh toán:", error)
+                toast.error("Không thể xử lý thanh toán!", { autoClose: 1000 })
             }
         }
     }
@@ -120,64 +149,98 @@ const CheckoutForm = () => {
         setUserDetails({ ...userDetails, [e.target.name]: e.target.value })
     }
 
-
-
     return (
         <>
-            <Container sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', marginBottom: 10 }}>
+            <Container sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 10 }}>
                 <Typography variant='h6' sx={{ margin: '20px 0' }}>Checkout</Typography>
-                <form noValidate autoComplete="off" className={styles.checkout_form} onSubmit={checkOutHandler} >
+                <form className={styles.checkout_form} onSubmit={checkOutHandler}>
                     <Grid container spacing={2}>
-                        <Grid item xs={12} sm={6}>
-                            <TextField inputProps={{ readOnly: true }} disabled label="First Name" name='firstName' value={userDetails.firstName || ''} onChange={handleOnchange} variant="outlined" fullWidth />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField inputProps={{ readOnly: true }} disabled label="Last Name" name='lastName' value={userDetails.lastName || ''} onChange={handleOnchange} variant="outlined" fullWidth />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField inputProps={{ readOnly: true }} disabled label="Contact Number" type='tel' name='phoneNumber' value={userDetails.phoneNumber || ''} onChange={handleOnchange} variant="outlined" fullWidth />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField inputProps={{ readOnly: true }} disabled label="Email" name='userEmail' value={userDetails.userEmail || ''} onChange={handleOnchange} variant="outlined" fullWidth />
+                        <Grid item xs={12}>
+                            <TextField
+                                label="Username"
+                                name="username"
+                                value={userDetails.username}
+                                disabled
+                                fullWidth
+                            />
                         </Grid>
                         <Grid item xs={12}>
-                            <TextField label="Address" name='address' value={userDetails.address || ''} onChange={handleOnchange} variant="outlined" fullWidth />
+                            <TextField
+                                label="Email"
+                                name="email"
+                                value={userDetails.email}
+                                onChange={handleOnchange}
+                                fullWidth
+                            />
                         </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField label="City" name='city' value={userDetails.city || ''} onChange={handleOnchange} variant="outlined" fullWidth />
+                        <Grid item xs={12}>
+                            <TextField
+                                label="Contact Number"
+                                name="phoneNumber"
+                                value={userDetails.phoneNumber}
+                                onChange={handleOnchange}
+                                fullWidth
+                            />
                         </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField type='tel' label="Postal/Zip Code" name='zipCode' value={userDetails.zipCode || ''} onChange={handleOnchange} variant="outlined" fullWidth />
+                        <Grid item xs={12}>
+                            <TextField
+                                label="Address"
+                                name="address"
+                                value={userDetails.address}
+                                onChange={handleOnchange}
+                                fullWidth
+                            />
                         </Grid>
-                        <Grid item xs={12} >
-                            <TextField label="Province/State" name='userState' value={userDetails.userState || ''} onChange={handleOnchange} variant="outlined" fullWidth />
+                        <Grid item xs={12}>
+                            <Typography variant="subtitle1" gutterBottom>Payment Method</Typography>
+                            <div style={{ display: 'flex', gap: '20px' }}>
+                                <label>
+                                    <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value="cash"
+                                        checked={paymentMethod === 'cash'}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                    /> &nbsp;Cash on Delivery
+                                </label>
+                                <label>
+                                    <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value="online"
+                                        checked={paymentMethod === 'online'}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                    /> &nbsp;Online Payment
+                                </label>
+                            </div>
                         </Grid>
                     </Grid>
-                    <Container sx={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 5 }}>
-                        <Link to='/update'> <Button variant='contained' endIcon={<MdUpdate />}>Update</Button></Link>
+                    <Container sx={{ display: 'flex', gap: 5, justifyContent: 'center', marginTop: 5 }}>
+                        <Link to='/update'><Button variant='contained' endIcon={<MdUpdate />}>Update</Button></Link>
                         <Button variant='contained' endIcon={<BsFillCartCheckFill />} type='submit'>Checkout</Button>
                     </Container>
-                </form >
+                </form>
 
                 <Dialog
                     open={openAlert}
                     TransitionComponent={Transition}
                     keepMounted
                     onClose={() => handleClose(setOpenAlert)}
-                    aria-describedby="alert-dialog-slide-description"
                 >
-                    <DialogContent sx={{ width: { xs: 280, md: 350, xl: 400 }, display: 'flex', justifyContent: 'center' }}>
-                        <Typography variant='h6'>Add permanent address then you don't have to add again.  </Typography>
+                    <DialogContent>
+                        <Typography variant='h6'>
+                            Please add your address and phone number to proceed faster next time.
+                        </Typography>
                     </DialogContent>
-                    <DialogActions sx={{ display: 'flex', justifyContent: 'space-evenly' }}>
-                        <Link to='/update'> <Button variant='contained' endIcon={<AiOutlineSave />} color='primary' >Add</Button></Link>
-                        <Button variant='contained' color='error' endIcon={<AiFillCloseCircle />} onClick={() => handleClose(setOpenAlert)}>Close</Button>
+                    <DialogActions>
+                        <Link to='/update'>
+                            <Button variant='contained' color='primary' endIcon={<AiOutlineSave />}>Add</Button>
+                        </Link>
+                        <Button onClick={() => handleClose(setOpenAlert)} variant='contained' color='error' endIcon={<AiFillCloseCircle />}>Close</Button>
                     </DialogActions>
                 </Dialog>
-
-            </Container >
+            </Container>
             <CopyRight sx={{ mt: 8, mb: 10 }} />
-
         </>
     )
 }

@@ -37,7 +37,10 @@ router.post('/login', LoginValidator, validate, async function (req, res, next) 
             exp: exp
         }, constants.SECRET_KEY)
         CreateCookieResponse(res, 'token', token, exp);
-        CreateSuccessResponse(res, 200, token)
+        CreateSuccessResponse(res, 200, {
+            authToken: token,
+            userId: user_id
+        });
     } catch (error) {
         next(error)
     }

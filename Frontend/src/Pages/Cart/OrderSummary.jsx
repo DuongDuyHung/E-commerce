@@ -1,57 +1,93 @@
-import { Box, Button, Card, CardActions, CardContent, Grid, Typography } from '@mui/material'
-import React from 'react'
-import { IoBagCheckOutline } from 'react-icons/io5'
-
-const OrderSummary = ({ proceedToCheckout, total, shippingCoast }) => {
+import {
+    Box,
+    Button,
+    Card,
+    CardActions,
+    CardContent,
+    Divider,
+    Grid,
+    TextField,
+    Typography
+  } from '@mui/material'
+  import React, { useState } from 'react'
+  import { IoBagCheckOutline } from 'react-icons/io5'
+  
+  const OrderSummary = ({ proceedToCheckout, total, shippingCoast }) => {
+    const [quantity, setQuantity] = useState(1)
+  
+    const handleQuantityChange = (e) => {
+      const value = Math.max(1, parseInt(e.target.value) || 1)
+      setQuantity(value)
+    }
+  
+    const subtotal = total - shippingCoast
+  
     return (
-        <Card
-            sx={{ width: { xs: 450, sm: 550, md: 550, lg: 700 } }}
-            // className={classes.root}
-
-            elevation={15}
-        >
-            <CardContent >
-                <Typography variant="div" component="h1">
-                    {" "}
-                    Order Summary
-                </Typography>
-                <Typography variant="subtitle2">
-                    <hr />
-                </Typography>
-                <Grid sx={{ display: 'flex', flexDirection: 'column' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', marginTop: 2 }} >
-                        <Typography variant="body1" component="div" color='primary'>
-                            SubTotal
-                        </Typography>
-                        <Typography variant="h6" component="div" color='primary'>
-                            ₹{total - shippingCoast}
-                        </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', marginTop: 2 }} >
-                        <Typography variant="body1" component="div" color='primary'>
-                            Shipping
-                        </Typography>
-                        <Typography variant="h6" component="div" color='primary'>
-                            ₹{shippingCoast}
-                        </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', marginTop: 2 }}>
-                        <Typography variant="body1" component="div" color='primary'>
-                            Total
-                        </Typography>
-                        <Typography variant="h6" component="div" color='primary'>
-                            ₹{total}
-                        </Typography>
-                    </Box>
-                </Grid>
-            </CardContent>
-            <CardActions sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 2 }}>
-                <Button variant='contained' size='large' endIcon={<IoBagCheckOutline />} color="primary" onClick={proceedToCheckout}>
-                    Checkout
-                </Button>
-            </CardActions>
-        </Card >
+      <Card
+        sx={{
+          maxWidth: 500,
+          mx: 'auto',
+          borderRadius: 3,
+          boxShadow: 8,
+          mt: 4,
+          px: 2,
+          py: 3
+        }}
+      >
+        <CardContent>
+          <Typography variant="h5" fontWeight={600} gutterBottom>
+            🧾 Order Summary
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+  
+          <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+  
+            <Grid item xs={6}>
+              <Typography variant="body1" fontWeight={500}>
+                Subtotal
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="body1">{subtotal * quantity}đồng</Typography>
+            </Grid>
+  
+            <Grid item xs={6}>
+              <Typography variant="body1" fontWeight={500}>
+                Shipping
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="body1">{shippingCoast}đồng</Typography>
+            </Grid>
+  
+            <Grid item xs={6}>
+              <Typography variant="h6" fontWeight={700}>
+                Total
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="h6" fontWeight={700}>
+                {subtotal * quantity + shippingCoast}đồng
+              </Typography>
+            </Grid>
+          </Grid>
+        </CardContent>
+  
+        <CardActions sx={{ justifyContent: 'center', mt: 2 }}>
+          <Button
+            variant="contained"
+            size="large"
+            endIcon={<IoBagCheckOutline />}
+            color="primary"
+            onClick={() => proceedToCheckout(quantity)}
+            sx={{ borderRadius: 2, px: 4 }}
+          >
+            Checkout
+          </Button>
+        </CardActions>
+      </Card>
     )
-}
-
-export default OrderSummary
+  }
+  
+  export default OrderSummary
+  

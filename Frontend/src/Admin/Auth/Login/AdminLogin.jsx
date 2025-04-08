@@ -26,49 +26,45 @@ const AdminLogin = () => {
   useEffect(() => {
     let auth = localStorage.getItem('Authorization');
     if (auth) {
-      navigate("/");
+        navigate("/admin/home");
     }
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     try {
-      if (!credentials.username || !credentials.password) {
-        toast.error("All fields are required", { autoClose: 500, theme: 'colored' });
-      } else if (credentials.password.length < 5) {
-        toast.error("Please enter a valid password", { autoClose: 500, theme: 'colored' });
-      } else {
         const sendAuth = await axios.post('http://localhost:3000/auth/login', {
-          username: credentials.username,
-          password: credentials.password
+            username: credentials.username,
+            password: credentials.password
         });
-  
+
         const receive = sendAuth.data;
+
         if (receive.success === true) {
-          toast.success("Login Successfully", { autoClose: 500, theme: 'colored' });
-          localStorage.setItem('Authorization', receive.data);
-          navigate('/admin/home');
+            toast.success("Login Successfully", { autoClose: 500, theme: 'colored' });
+
+            // Lưu token và userId vào localStorage
+            localStorage.setItem('Authorization', receive.data.authToken);
+            localStorage.setItem('userId', receive.data.userId);
+
+            navigate('/admin/home');
         } else {
-          toast.error("Invalid Credentials", { autoClose: 500, theme: 'colored' });
+            toast.error("Invalid Credentials", { autoClose: 500, theme: 'colored' });
         }
-      }
     } catch (error) {
-      if (error.response) {
-        // Lỗi từ phía server
-        toast.error(`Error: ${error.response.data.message || "Invalid Credentials"}`, { autoClose: 500, theme: 'colored' });
-        console.error("Server Error:", error.response.data);
-      } else if (error.request) {
-        // Không nhận được phản hồi từ server
-        toast.error("No response from server. Please try again later.", { autoClose: 500, theme: 'colored' });
-        console.error("No Response:", error.request);
-      } else {
-        // Lỗi khác
-        toast.error(`Error: ${error.message}`, { autoClose: 500, theme: 'colored' });
-        console.error("Error:", error.message);
-      }
+        if (error.response) {
+            toast.error(`Error: ${error.response.data.message || "Invalid Credentials"}`, { autoClose: 500, theme: 'colored' });
+            console.error("Server Error:", error.response.data);
+        } else if (error.request) {
+            toast.error("No response from server. Please try again later.", { autoClose: 500, theme: 'colored' });
+            console.error("No Response:", error.request);
+        } else {
+            toast.error(`Error: ${error.message}`, { autoClose: 500, theme: 'colored' });
+            console.error("Error:", error.message);
+        }
     }
-  };
+};
 
   return (
     <Container component="main" maxWidth="xs">

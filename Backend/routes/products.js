@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+let Cart = require('../schemas/cart');
 let productSchema = require('../schemas/product')
 let categorySchema = require('../schemas/category')
 let slugify = require('slugify')
@@ -60,6 +61,34 @@ router.get('/categoryid', async function (req, res, next) {
             success: false,
             message: error.message,
         });
+    }
+});
+
+router.get('/cart/:productId', async (req, res) => {
+    try {
+        const { userId } = req.query; // Lấy userId từ query params
+        const { productId } = req.params;
+
+        if (!userId) {
+            return res.status(400).send({ success: false, message: 'User ID is required' });
+        }
+
+        // Kiểm tra xem sản phẩm có thuộc giỏ hàng của người dùng không
+        const cart = await Cart.findOne({ user: userId, 'items.product': productId });
+        if (!cart) {
+            return res.status(404).send({ success: false, message: 'Product not found in user cart' });
+        }
+
+        // Lấy thông tin chi tiết sản phẩm
+        const product = await productSchema.findById(productId);
+        if (!product) {
+            return res.status(404).send({ success: false, message: 'Product not found' });
+        }
+
+        res.status(200).send({ success: true, data: product });
+    } catch (error) {
+        console.error('Error fetching product details:', error);
+        res.status(500).send({ success: false, message: error.message });
     }
 });
 

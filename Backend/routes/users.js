@@ -14,6 +14,19 @@ router.get('/',check_authentication,check_authorization(constants.MOD_PERMISSION
   let users = await userController.GetAllUser();
   CreateSuccessResponse(res, 200, users)
 });
+router.get('/:id', async (req, res, next) => {
+  try {
+    const userId = req.params.id;
+    const user = await userController.GetUserByID(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    CreateSuccessResponse(res, 200, user);
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.post('/', async function (req, res, next) {
   try {
     let body = req.body;

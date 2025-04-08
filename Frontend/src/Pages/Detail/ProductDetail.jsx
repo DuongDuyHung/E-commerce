@@ -41,7 +41,10 @@ const ProductDetail = () => {
     let authToken = localStorage.getItem('Authorization');
     let setProceed = authToken ? true : false;
 
+
     useEffect(() => {
+        const userId = localStorage.getItem('userId');
+        console.log('Logged in userId (useEffect):', userId); // Kiểm tra giá trị userId khi component được mount
         fetchProductDetails(); // Gọi API lấy chi tiết sản phẩm
         fetchSimilarProducts(); // Gọi API lấy sản phẩm tương tự theo category
         window.scroll(0, 0);
@@ -72,11 +75,25 @@ const ProductDetail = () => {
     const addToCart = async (product) => {
         if (setProceed) {
             try {
-                const { data } = await axios.post(`${process.env.REACT_APP_ADD_CART}`, { _id: product._id, quantity: productQuantity }, {
-                    headers: {
-                        'Authorization': authToken,
-                    },
-                });
+                const userId = localStorage.getItem('userId');
+                console.log('Logged in userId:', userId);
+                if (!userId) {
+                    toast.error("User ID not found. Please log in again.", { autoClose: 500, theme: 'colored' });
+                    navigate('/login'); // Điều hướng đến trang đăng nhập
+                    return;
+                } // nếu bạn đã lưu
+                const { data } = await axios.post(`http://localhost:3000/cart/add`, 
+                    {
+                        userId, // Thay USER_ID bằng id người dùng thật
+                        productId: product._id,
+                        quantity: productQuantity
+                    }, 
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        }
+                    }
+                );
                 setCart(data);
                 toast.success("Added To Cart", { autoClose: 500, theme: 'colored' });
             } catch (error) {

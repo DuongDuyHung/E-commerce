@@ -91,13 +91,17 @@ const SingleCategory = () => {
         <>
             <Container maxWidth='xl' style={{ marginTop: 90, display: 'flex', justifyContent: "center", flexDirection: "column" }}>
             <Button
-                    variant="outlined"
-                    color="primary"
-                    onClick={() => navigate(-1)} // Quay lại trang trước đó
-                    sx={{ marginBottom: 2 }}
-                >
-                    Quay lại
-                </Button>
+    variant="outlined"
+    color="primary"
+    onClick={() => navigate(-1)} // Quay lại trang trước đó
+    sx={{
+        marginBottom: 2,
+        width: '150px', // Giảm chiều rộng của nút
+        alignSelf: 'flex-start', // Căn nút về bên trái
+    }}
+>
+    Quay lại
+</Button>
                 < Box sx={{ minWidth: 140 }}>
                     <FormControl sx={{ width: 140 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, width: "80vw" }}>
