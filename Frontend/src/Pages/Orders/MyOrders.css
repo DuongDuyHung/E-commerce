@@ -1,0 +1,89 @@
+.orders-container {
+    padding: 20px;
+    font-family: 'Segoe UI', sans-serif;
+  }
+  
+  .orders-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #333;
+  }
+  
+  .table-wrapper {
+    overflow-x: auto;
+  }
+  
+  .orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .orders-table th,
+  .orders-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .orders-table th {
+    background-color: #f5f5f5;
+    font-weight: 600;
+  }
+  
+  .status-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-block;
+    text-transform: capitalize;
+  }
+  
+  .status-badge.delivered {
+    background-color: #e0f7e9;
+    color: #2e7d32;
+  }
+  
+  .status-badge.processing,
+  .status-badge.pending {
+    background-color: #fff8e1;
+    color: #f57c00;
+  }
+  
+  .status-badge.delivering {
+    background-color: #e3f2fd;
+    color: #0277bd;
+  }
+  
+  .status-badge.canceled {
+    background-color: #fdecea;
+    color: #d32f2f;
+  }
+  
+  .invoice-link {
+    color: #1976d2;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  .cancel-btn {
+    background-color: #d32f2f;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .cancel-btn:hover {
+    background-color: #b71c1c;
+  }
+  
+  .canceled-text {
+    color: #d32f2f;
+    font-style: italic;
+  }
+  

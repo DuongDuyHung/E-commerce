@@ -13,6 +13,7 @@ let path = require('path')
 let FormData = require('form-data')
 let axios = require('axios')
 let fs = require('fs')
+let User = require('../schemas/user');
 
 
 
@@ -21,7 +22,7 @@ router.post('/signup', SignUpValidator, validate, async function (req, res, next
         let newUser = await userController.CreateAnUser(
             req.body.username, req.body.password, req.body.email, 'user'
         )
-        CreateSuccessResponse(res, 200, newUser)
+        CreateSuccessResponse(res, 200, newUser,)
     } catch (error) {
         next(error)
     }
@@ -51,17 +52,17 @@ router.get('/logout', function (req, res, next) {
 router.get('/me', check_authentication, function (req, res, next) {
     CreateSuccessResponse(res, 200, req.user)
 })
-router.post('/change_password', check_authentication,
-    function (req, res, next) {
-        try {
-            let oldpassword = req.body.oldpassword;
-            let newpassword = req.body.newpassword;
-            let result = userController.Change_Password(req.user, oldpassword, newpassword)
-            CreateSuccessResponse(res, 200, result)
-        } catch (error) {
-            next(error)
-        }
-    })
+router.post('/change_password', check_authentication, async function (req, res, next) {
+    try {
+        const oldpassword = req.body.currentPassword;  // <-- tên khớp với frontend
+        const newpassword = req.body.newPassword;
+
+        const result = await userController.Change_Password(req.user, oldpassword, newpassword);
+        CreateSuccessResponse(res, 200, result);
+    } catch (error) {
+        next(error);
+    }
+});
 
 router.post('/forgotpassword', async function (req, res, next) {
     try {
@@ -91,6 +92,9 @@ router.post('/resetpassword/:token', async function (req, res, next) {
         next(error)
     }
 })
+
+
+
 //storage
 let avatarDir = path.join(__dirname, "../avatars");
 let authURL = "http://localhost:3000/auth/avatars/";

@@ -19,7 +19,7 @@ module.exports = {
             next(new Error("ban chua dang nhap"));
         } else {
             let result = jwt.verify(token, constants.SECRET_KEY);
-            if (result.exp > Date.now()) {
+            if (result.exp > Math.floor(Date.now() / 1000)) {
                 let user = await userController.GetUserByID(result.id);
                 req.user = user;
                 next();

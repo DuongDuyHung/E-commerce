@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 
 const CategoryCard = ({ data }) => {
     return (
-        <Link to={`product/type/${data.name.toLowerCase()}`}>
+        <Link to={`product/type/${data.name}`}>
             <div className={styles.mainCard}>
                 <img src={data.img} alt="" className={styles.mainImg} loading='lazy' />
                 <span className={styles.imgTitle}>{data.name}</span>

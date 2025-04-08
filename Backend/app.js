@@ -50,7 +50,8 @@ app.use('/products', require('./routes/products'));
 app.use('/categories', require('./routes/categories'));
 app.use('/cart', require('./routes/cart'));
 app.use('/order', require('./routes/order'));
-
+app.use('/wishlist', require('./routes/wishlist'));
+app.use('/invoice', require('./routes/invoice'));
 
 
 // catch 404 and forward to error handler

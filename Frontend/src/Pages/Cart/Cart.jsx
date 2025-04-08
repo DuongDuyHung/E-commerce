@@ -38,16 +38,14 @@ const Cart = () => {
 
 
     useEffect(() => {
-        if (setProceed) {
-            getCart()
-            getPreviousOrder()
+        if (authToken) {
+            getCart();
+            getPreviousOrder();
+        } else {
+            setOpenAlert(true);
         }
-        else {
-            setOpenAlert(true)
-        }
-        window.scroll(0, 0)
-
-    }, [])
+        window.scroll(0, 0);
+    }, [authToken]);
 
     useEffect(() => {
         if (setProceed) {

@@ -95,6 +95,7 @@ const AddProduct = ({ getProductInfo }) => {
                 name: productInfo.name,
                 brand: productInfo.brand,
                 price: productInfo.price,
+                quantity: productInfo.quantity,
                 category: productInfo.category,
                 imageUrl: imageUrl, // Sử dụng URL ảnh từ backend
                 rating: productInfo.rating,
@@ -113,6 +114,7 @@ const AddProduct = ({ getProductInfo }) => {
                     name: "",
                     price: "",
                     rating: "",
+                    quantity: "",
                     category: "",
                     description: "",
                     author: "",
@@ -183,6 +185,9 @@ const AddProduct = ({ getProductInfo }) => {
                                     <TextField label="Price" name='price' value={productInfo.price} onChange={handleOnChange} variant="outlined" inputMode='numeric' fullWidth required />
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
+    <TextField label="Quantity" name='quantity' value={productInfo.quantity} onChange={handleOnChange} variant="outlined" inputMode='numeric' fullWidth required />
+</Grid>
+                                <Grid item xs={12} sm={6}>
                                     <TextField label="Rating" name='rating' value={productInfo.rating} onChange={handleOnChange} variant="outlined" inputMode='numeric' fullWidth required />
                                 </Grid>
                                 <Grid item xs={12}>
@@ -197,6 +202,7 @@ const AddProduct = ({ getProductInfo }) => {
                                         required
                                     />
                                 </Grid>
+                                
                             </Grid>
                             <DialogActions sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
                                 <Button variant='contained' color='error' onClick={() => setOpen(false)} endIcon={<MdOutlineCancel />}>Cancel</Button>

@@ -17,9 +17,14 @@ const DesktopNavigation = () => {
   let authToken = localStorage.getItem('Authorization');
   let setProceed = authToken !== null ? true : false
   useEffect(() => {
-    getCart(setProceed, setCart, authToken)
-    getWishList(setProceed, setWishlistData, authToken)
-  }, [])
+    let authToken = localStorage.getItem('Authorization');
+    if (authToken) {
+      // Set flag cho việc dữ liệu có thể được tải
+      let setProceed = true;
+      getCart(setProceed, setCart, authToken);
+      getWishList(setProceed, setWishlistData, authToken);
+    }
+  }, [setCart, setWishlistData]); 
 
 
   return (
@@ -57,7 +62,13 @@ const DesktopNavigation = () => {
                 </NavLink>
               </Tooltip>
             </li>
-
+            <li className="nav-links">
+  <Tooltip title='Order History'>
+    <NavLink to='/my-orders'>
+      <span className='nav-icon-span'> History</span>
+    </NavLink>
+  </Tooltip>
+</li>
             {
               setProceed ?
                 <>

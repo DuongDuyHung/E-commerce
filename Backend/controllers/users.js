@@ -39,11 +39,11 @@ module.exports = {
     }
   },
   UpdateAnUser: async function (id, body) {
-    let allowField = ["password", "email", "imgURL"];
+    let allowField = ["password", "email", "imgURL", "address", "phoneNumber"];
     let getUser = await userSchema.findById(id);
     for (const key of Object.keys(body)) {
       if (allowField.includes(key)) {
-        getUser[key] = body[key]
+        getUser[key] = body[key];
       }
     }
     return await getUser.save();
@@ -69,13 +69,19 @@ module.exports = {
     }
   },
   Change_Password: async function (user, oldpassword, newpassword) {
-    if (bcrypt.compareSync(oldpassword, user.password)) {
-        //doit pass
-        user.password = newpassword;
-        await user.save();
-    }
-    else{
-      throw new Error("oldpassword khong dung")
-    }
+    if (!user || !oldpassword || !newpassword) {
+      throw new Error("Missing parameters");
+  }
+
+  const isMatch = await bcrypt.compare(oldpassword, user.password);
+  if (!isMatch) {
+      throw new Error("Mật khẩu cũ không đúng");
+  }
+
+  // Mã hóa mật khẩu mới
+  user.password = newpassword;
+  await user.save();
+
+  return { message: "Đổi mật khẩu thành công" };
   }
 }

@@ -1,6 +1,6 @@
 import { Container } from '@mui/system'
 import axios from 'axios'
-import CartCard from '../../Components/Card/CartCard/CartCard'
+import CartList from '../../Components/Card/CartCard/CartList'
 import React, { useContext, useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import { ContextFunction } from '../../Context/Context'
@@ -19,37 +19,62 @@ const Wishlist = () => {
     let setProceed = authToken ? true : false
     let navigate = useNavigate()
     useEffect(() => {
-        getWishList()
-    }, [])
+        if (authToken) {
+            getWishList();
+        } else {
+            setOpenAlert(true);
+        }
+    }, [authToken]); // Theo dõi authToken
     const getWishList = async () => {
         if (setProceed) {
-            const { data } = await axios.get(`${process.env.REACT_APP_GET_WISHLIST}`,
-                {
+            try {
+                const userId = localStorage.getItem('userId');
+                console.log('userId', userId); // Lấy userId từ localStorage
+                const { data } = await axios.get(`http://localhost:3000/wishlist/${userId}`, {
                     headers: {
-                        'Authorization': authToken
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    params: {
+                        userId: userId  // Thêm userId vào query params
                     }
-                })
-            setWishlistData(data)
+                });
+                console.log("Wishlist data: ", data); // Log dữ liệu trả về từ API
+                setWishlistData(data);
+                console.log("Updated wishlistData: ", wishlistData); // Kiểm tra sau khi cập nhật
+            } catch (error) {
+                console.error("Error fetching wishlist: ", error); // Log lỗi nếu có
+            }
+        } else {
+            setOpenAlert(true);
         }
-        else {
-            setOpenAlert(true)
-        }
-    }
+    };
+
     const removeFromWishlist = async (product) => {
+        console.log('Removing from wishlist:', product);  // Kiểm tra sản phẩm đang bị xóa
         if (setProceed) {
             try {
-                const deleteProduct = await axios.delete(`${process.env.REACT_APP_DELETE_WISHLIST}/${product._id}`, {
+                // Lấy wishlistId từ wishlistData (trong trường hợp wishlistData._id là ID đúng)
+                const wishlistId = wishlistData._id;
+    
+                // Gửi yêu cầu xóa sản phẩm từ wishlist bằng wishlistId và product._id
+                const deleteProduct = await axios.delete(`http://localhost:3000/wishlist/${wishlistData.user}/${product._id}`, {
                     headers: {
-                        'Authorization': authToken
+                      'Authorization': `Bearer ${authToken}`
                     }
-                })
-                setWishlistData(wishlistData.filter(c => c.productId._id !== product.productId._id))
-                toast.success("Removed From Wishlist", { autoClose: 500, theme: 'colored' })
+                  });
+    
+                // Cập nhật lại danh sách wishlist sau khi xóa sản phẩm
+                setWishlistData(prevWishlistData => ({
+                    ...prevWishlistData,
+                    items: prevWishlistData.items.filter(item => item.product._id !== product._id) // Lọc theo product._id trong items
+                }));
+    
+                toast.success("Removed From Wishlist", { autoClose: 500, theme: 'colored' });
             } catch (error) {
-                toast.error(error, { autoClose: 500, theme: 'colored' })
+                toast.error(error.message, { autoClose: 500, theme: 'colored' });
             }
         }
-    }
+    };
     const handleClose = () => {
         setOpenAlert(false);
         navigate('/')
@@ -61,23 +86,20 @@ const Wishlist = () => {
     return (
         <>
             <Typography variant='h3' sx={{ textAlign: 'center', margin: "10px 0 ", color: '#1976d2', fontWeight: 'bold' }}>Wishlist</Typography>
-            {setProceed &&
-
-                wishlistData.length <= 0 ?
-                (<Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <div className="main-card">
-                        <img src={EmptyCart} alt="Empty_cart" className="empty-cart-img" />
-                        <Typography variant='h6' sx={{ textAlign: 'center', color: '#1976d2', fontWeight: 'bold' }}>No products in wishlist</Typography>
-                    </div>
-                </Box>)
-                : (<Container maxWidth='xl' style={{ display: "flex", justifyContent: 'center', flexWrap: "wrap", paddingBottom: 20 }}>
-                    {wishlistData.map(product => (
-                        <CartCard product={product} removeFromCart={removeFromWishlist} key={product._id} />
-                    ))}
-                </Container>)
-
-            }
-
+            {wishlistData && wishlistData.items && wishlistData.items.length > 0 ? (
+    <Container maxWidth='xl' style={{ display: "flex", justifyContent: 'center', flexWrap: "wrap", paddingBottom: 20 }}>
+        {wishlistData.items.map(item => (
+            <CartList product={item.product} removeFromWishlist={removeFromWishlist} key={item._id} />
+        ))}
+    </Container>
+) : (
+    <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div className="main-card">
+            <img src={EmptyCart} alt="Empty_cart" className="empty-cart-img" />
+            <Typography variant='h6' sx={{ textAlign: 'center', color: '#1976d2', fontWeight: 'bold' }}>No products in wishlist</Typography>
+        </div>
+    </Box>
+)}
             <Dialog open={openAlert}
                 keepMounted
                 onClose={handleClose}

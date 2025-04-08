@@ -50,8 +50,10 @@ const Register = () => {
         const receive = await sendAuth.data;
         if (receive.success === true) {
           toast.success("Registered Successfully", { autoClose: 500, theme: 'colored' });
-          localStorage.setItem('Authorization', receive.authToken);
-          navigate('/');
+          console.log(receive);
+      //     localStorage.setItem('Authorization', receive.authToken);
+      // localStorage.setItem('userId', receive.userId); // Giả sử backend trả về userId khi đăng ký thành công
+      navigate('/login');
           console.log(receive);
         }
         else {

@@ -112,6 +112,7 @@ router.post('/', async function (req, res, next) {
         console.log("Received body:", body);
         
         let imageUrl = body.imageUrl || ''; // Kiểm tra ảnh từ frontend
+        let description = body.description || ''; // Lấy description từ body
         
         if (!imageUrl) {
             return res.status(400).send({
@@ -139,6 +140,7 @@ router.post('/', async function (req, res, next) {
             category: category._id,
             slug: slugify(body.name, { lower: true }),
             imgURL: imageUrl, // Lưu URL ảnh vào database
+            description: description, // Lưu description vào database
         });
         
         console.log("New product object:", newProduct); // Log newProduct trước khi lưu
@@ -231,6 +233,22 @@ router.delete('/:id', async function (req, res, next) {
         })
     }
 });
+
+// Express route ví dụ
+router.post('/update-stock', async (req, res) => {
+    try {
+      const products = req.body.products; // [{ productId, quantity }]
+      for (const item of products) {
+        await productSchema.findByIdAndUpdate(item.productId, {
+          $inc: { stock: -item.quantity }
+        });
+      }
+      res.status(200).json({ message: 'Stock updated' });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Failed to update stock' });
+    }
+  });
 
 
 module.exports = router;

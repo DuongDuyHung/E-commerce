@@ -88,6 +88,15 @@ const CheckoutForm = () => {
                     headers: { Authorization: `Bearer ${authToken}` }
                 })
         
+                await axios.post(`http://localhost:3000/products/update-stock`, {
+                    products: cart.map(item => ({
+                        productId: item._id,
+                        quantity: item.quantity
+                    }))
+                }, {
+                    headers: { Authorization: `Bearer ${authToken}` }
+                })
+        
                 // 🧹 Gọi API để xóa toàn bộ giỏ hàng
                 await axios.delete(`http://localhost:3000/cart/clear/${userData._id}`, {
                     headers: { Authorization: `Bearer ${authToken}` }
@@ -98,6 +107,7 @@ const CheckoutForm = () => {
                  await axios.delete(`http://localhost:3000/cart/clear/${userData._id}`, {
                     headers: { Authorization: `Bearer ${authToken}` }
                 })
+            
                 navigate('/')
             } catch (error) {
                 console.error("Lỗi khi đặt hàng:", error)

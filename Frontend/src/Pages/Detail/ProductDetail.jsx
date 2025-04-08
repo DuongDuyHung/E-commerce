@@ -104,23 +104,31 @@ const ProductDetail = () => {
         }
     };
 
-    const addToWishlist = async (product) => {
-        if (setProceed) {
-            try {
-                const { data } = await axios.post(`${process.env.REACT_APP_ADD_WISHLIST}`, { _id: product._id }, {
-                    headers: {
-                        'Authorization': authToken,
-                    },
-                });
-                setWishlistData(data);
-                toast.success("Added To Wishlist", { autoClose: 500, theme: 'colored' });
-            } catch (error) {
-                toast.error(error.response?.data?.msg || "Failed to add to wishlist", { autoClose: 500, theme: 'colored' });
+ const addToWishlist = async (product) => {
+    if (setProceed) { // Kiểm tra nếu người dùng đã đăng nhập hoặc điều kiện thêm vào wishlist
+        try {
+            const userId = localStorage.getItem('userId'); // Lấy userId từ localStorage
+            if (!userId) {
+                return toast.error("User not logged in", { autoClose: 500, theme: 'colored' });
             }
-        } else {
-            setOpenAlert(true);
+
+            console.log('productId:', product._id); // Log productId để kiểm tra giá trị
+
+            // Gửi yêu cầu POST tới API wishlist
+            const { data } = await axios.post(`http://localhost:3000/wishlist`, 
+                { productId: product._id, userId: userId }, // Truyền thông tin sản phẩm và userId vào body
+            );
+            setWishlistData(data);
+            toast.success("Added To Wishlist", { autoClose: 500, theme: 'colored' });
+        } catch (error) {
+            console.error('Error:', error); // Log lỗi để xem chi tiết
+            toast.error(error.response?.data?.msg || "Failed to add to wishlist", { autoClose: 500, theme: 'colored' });
         }
-    };
+    } else {
+        setOpenAlert(true); // Hiển thị cảnh báo nếu người dùng chưa đăng nhập
+    }
+};
+    
 
     const shareProduct = (product) => {
         const data = {

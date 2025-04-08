@@ -38,6 +38,7 @@ const ImportProduct = ({ getProductInfo }) => {
                         price: product.price,
                         rating: product.rating,
                         category: product.category,
+                        quantity: product.quantity,
                         description: product.description,
                         author: product.author || '',
                         brand: product.brand || '',
