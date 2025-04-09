@@ -72,13 +72,15 @@ const CartCard = ({ product, removeFromCart,updateQuantity }) => {
 
     return (
         <Box
-            sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                borderBottom: '1px solid #ddd',
-                padding: '10px 0',
-            }}
+        sx={{
+            display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 2,
+    borderBottom: '1px solid #ddd',
+    padding: '10px 0',
+    width: '100%',
+        }}
         >
             {/* Hình ảnh sản phẩm */}
             <Box sx={{ flex: '0 0 100px', marginRight: '20px' }}>

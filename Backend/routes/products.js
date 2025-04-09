@@ -237,15 +237,20 @@ router.delete('/:id', async function (req, res, next) {
 // Express route ví dụ
 router.post('/update-stock', async (req, res) => {
     try {
-      const products = req.body.products; // [{ productId, quantity }]
+      const products = req.body.products;
+      console.log("📦 Update Stock Input:", products);
+  
       for (const item of products) {
-        await productSchema.findByIdAndUpdate(item.productId, {
-          $inc: { stock: -item.quantity }
-        });
+        const updated = await productSchema.findByIdAndUpdate(item.productId, {
+          $inc: { quantity: -item.quantity }
+        }, { new: true });
+  
+        console.log("📝 Updated product:", updated);
       }
+  
       res.status(200).json({ message: 'Stock updated' });
     } catch (err) {
-      console.error(err);
+      console.error("❌ Update stock failed:", err);
       res.status(500).json({ error: 'Failed to update stock' });
     }
   });
