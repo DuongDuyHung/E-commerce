@@ -1,41 +1,43 @@
 import './singlecategory.css'
 import React, { useState, useEffect } from 'react'
-import { Link, useParams,useNavigate } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { Container } from '@mui/system'
 import { Box, Button, MenuItem, FormControl, Select } from '@mui/material'
+import Pagination from '@mui/material/Pagination'
+import Stack from '@mui/material/Stack'
 import Loading from '../Components/loading/Loading'
-import { BiFilterAlt } from 'react-icons/bi';
+import { BiFilterAlt } from 'react-icons/bi'
 import ProductCard from '../Components/Card/Product Card/ProductCard'
 import CopyRight from '../Components/CopyRight/CopyRight'
 
-
-
 const SingleCategory = () => {
-
     const [productData, setProductData] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [filterOption, setFilterOption] = useState('All')
     const [title, setTitle] = useState('All')
+    const [currentPage, setCurrentPage] = useState(1)
+    const productsPerPage = 8
+
     const { cat } = useParams()
     const navigate = useNavigate()
 
     useEffect(() => {
-        getCategoryProduct(); // Gọi API lấy sản phẩm theo category
-        window.scroll(0, 0);
-    }, [cat]);
+        setCurrentPage(1) // Reset về trang đầu khi thay đổi category
+        getCategoryProduct()
+        window.scroll(0, 0)
+    }, [cat])
 
     const getCategoryProduct = async () => {
         try {
             setIsLoading(true)
             const { data } = await axios.get(`http://localhost:3000/products/categoryid`, {
                 params: { category: cat }
-              });
+            })
             setIsLoading(false)
             setProductData(data)
-
         } catch (error) {
-            console.log(error);
+            console.log(error)
         }
     }
 
@@ -43,66 +45,76 @@ const SingleCategory = () => {
 
     if (cat === 'book') {
         productFilter.push('All', 'Scifi', 'Business', 'Mystery', 'Cookbooks', 'Accessories', 'Price Low To High', 'Price High To Low', 'High Rated', 'Low Rated')
-    }
-    else if (cat === 'cloths') {
+    } else if (cat === 'cloths') {
         productFilter.push('All', 'Men', 'Women', 'Price Low To High', 'Price High To Low', 'High Rated', 'Low Rated')
-    }
-    else if (cat === 'shoe') {
+    } else if (cat === 'shoe') {
         productFilter.push('All', 'Running', 'Football', 'Formal', 'Casual', 'Price Low To High', 'Price High To Low', 'High Rated', 'Low Rated')
-    }
-    else if (cat === 'electronics') {
+    } else if (cat === 'electronics') {
         productFilter.push('All', 'Monitor', 'SSD', 'HDD', 'Price Low To High', 'Price High To Low', 'High Rated', 'Low Rated')
-
-    }
-    else if (cat === 'jewelry') {
+    } else if (cat === 'jewelry') {
         productFilter.push('All')
-
     }
 
     const handleChange = (e) => {
         setFilterOption(e.target.value.split(" ").join("").toLowerCase())
         setTitle(e.target.value)
     }
-    // pricelowtohigh 
-    // pricehightolow
-    // highrated
-    // lowrated
-  
+
     const getData = async () => {
+        setCurrentPage(1) // Reset về trang đầu khi thay đổi filter
         setIsLoading(true)
         const filter = filterOption.toLowerCase()
-        const { data } = await axios.post(`${process.env.REACT_APP_PRODUCT_TYPE_CATEGORY_}`, { userType: cat, userCategory: filter })
+        const { data } = await axios.post(`${process.env.REACT_APP_PRODUCT_TYPE_CATEGORY_}`, {
+            userType: cat,
+            userCategory: filter
+        })
         setProductData(data)
         setIsLoading(false)
     }
+
     useEffect(() => {
         getData()
     }, [filterOption])
 
-    const loading = isLoading ?
-        (
-            <Container maxWidth='xl' style={{ marginTop: 10, display: "flex", justifyContent: "center", flexWrap: "wrap", paddingLeft: 10, paddingBottom: 20 }}>
-                <Loading /><Loading /><Loading /><Loading />
-                <Loading /><Loading /><Loading /><Loading />
-            </Container >
-        )
-        : ""
+    const indexOfLastProduct = currentPage * productsPerPage
+    const indexOfFirstProduct = indexOfLastProduct - productsPerPage
+    const currentProducts = productData.slice(indexOfFirstProduct, indexOfLastProduct)
+
+    const handlePageChange = (event, value) => {
+        setCurrentPage(value)
+        window.scrollTo(0, 0)
+    }
+
+    const loading = isLoading ? (
+        <Container maxWidth='xl' style={{
+            marginTop: 10,
+            display: "flex",
+            justifyContent: "center",
+            flexWrap: "wrap",
+            paddingLeft: 10,
+            paddingBottom: 20
+        }}>
+            <Loading /><Loading /><Loading /><Loading />
+            <Loading /><Loading /><Loading /><Loading />
+        </Container>
+    ) : ""
+
     return (
         <>
             <Container maxWidth='xl' style={{ marginTop: 90, display: 'flex', justifyContent: "center", flexDirection: "column" }}>
-            <Button
-    variant="outlined"
-    color="primary"
-    onClick={() => navigate(-1)} // Quay lại trang trước đó
-    sx={{
-        marginBottom: 2,
-        width: '150px', // Giảm chiều rộng của nút
-        alignSelf: 'flex-start', // Căn nút về bên trái
-    }}
->
-    Quay lại
-</Button>
-                < Box sx={{ minWidth: 140 }}>
+                <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={() => navigate(-1)}
+                    sx={{
+                        marginBottom: 2,
+                        width: '150px',
+                        alignSelf: 'flex-start',
+                    }}
+                >
+                    Quay lại
+                </Button>
+                <Box sx={{ minWidth: 140 }}>
                     <FormControl sx={{ width: 140 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, width: "80vw" }}>
                             <Button endIcon={<BiFilterAlt />}>Filters</Button>
@@ -121,20 +133,34 @@ const SingleCategory = () => {
                     </FormControl>
                 </Box>
                 {loading}
-                <Container maxWidth='xl' style={{ marginTop: 10, display: "flex", justifyContent: 'center', flexWrap: "wrap", paddingBottom: 20, marginBottom: 30, width: '100%' }}>
-    {productData.map(prod => (
-        <Link to={`/Detail/type/${cat}/${prod._id}`} key={prod._id}>
-            <ProductCard prod={prod} />
-        </Link>
-    ))}
-</Container>
-            </Container >
+                <Container maxWidth='xl' style={{
+                    marginTop: 10,
+                    display: "flex",
+                    justifyContent: 'center',
+                    flexWrap: "wrap",
+                    paddingBottom: 20,
+                    marginBottom: 30,
+                    width: '100%'
+                }}>
+                    {currentProducts.map(prod => (
+                        <Link to={`/Detail/type/${cat}/${prod._id}`} key={prod._id}>
+                            <ProductCard prod={prod} />
+                        </Link>
+                    ))}
+                </Container>
+
+                <Stack spacing={2} alignItems="center" mt={2}>
+                    <Pagination
+                        count={Math.ceil(productData.length / productsPerPage)}
+                        page={currentPage}
+                        onChange={handlePageChange}
+                        color="primary"
+                    />
+                </Stack>
+            </Container>
             <CopyRight sx={{ mt: 8, mb: 10 }} />
         </>
     )
 }
 
-
 export default SingleCategory
-
-    //         
