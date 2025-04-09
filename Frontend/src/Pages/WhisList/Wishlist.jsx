@@ -4,7 +4,7 @@ import CartList from '../../Components/Card/CartCard/CartList'
 import React, { useContext, useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import { ContextFunction } from '../../Context/Context'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate ,useLocation} from 'react-router-dom'
 import { Box, Button, Dialog, DialogActions, DialogContent, Typography } from '@mui/material'
 import { AiFillCloseCircle, AiOutlineLogin } from 'react-icons/ai'
 import { EmptyCart } from '../../Assets/Images/Image';
@@ -14,7 +14,7 @@ import CopyRight from '../../Components/CopyRight/CopyRight'
 const Wishlist = () => {
     const { wishlistData, setWishlistData } = useContext(ContextFunction)
     const [openAlert, setOpenAlert] = useState(false);
-
+    const location = useLocation();
     let authToken = localStorage.getItem('Authorization')
     let setProceed = authToken ? true : false
     let navigate = useNavigate()
@@ -24,7 +24,7 @@ const Wishlist = () => {
         } else {
             setOpenAlert(true);
         }
-    }, [authToken]); // Theo dõi authToken
+    }, [authToken, location.pathname]); // Theo dõi authToken
     const getWishList = async () => {
         if (setProceed) {
             try {

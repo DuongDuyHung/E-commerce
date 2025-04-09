@@ -13,28 +13,38 @@ const CartCard = ({ product, removeFromCart,updateQuantity }) => {
     useEffect(() => {
         const fetchProductDetailsFromCart = async () => {
             try {
-                const userId = localStorage.getItem('userId'); // Lấy userId từ localStorage
+                const userId = localStorage.getItem('userId');
                 if (!userId) {
                     console.error('User ID not found');
                     return;
                 }
-
+    
+                if (!product || !product.product) {
+                    console.error('Product data is missing:', product);
+                    return;
+                }
+    
                 const productId = typeof product.product === 'string' ? product.product : product.product._id;
-
+    
+                if (!productId) {
+                    console.error('Product ID is undefined:', product);
+                    return;
+                }
+    
                 const { data } = await axios.get(`http://localhost:3000/products/cart/${productId}`, {
                     params: { userId },
                 });
-                setProductDetails(data.data); // Lưu thông tin sản phẩm vào state
-                setTotalPrice(data.data.price * product.quantity); // Tính giá tạm thời ban đầu
+    
+                setProductDetails(data.data);
+                setTotalPrice(data.data.price * product.quantity);
             } catch (error) {
                 console.error('Error fetching product details:', error);
             }
         };
-
-        if (product.product) {
-            fetchProductDetailsFromCart();
-        }
-    }, [product.product]);
+    
+        fetchProductDetailsFromCart();
+    }, [product]);
+    
 
     // Hàm xử lý tăng số lượng
     const handleIncrease = () => {

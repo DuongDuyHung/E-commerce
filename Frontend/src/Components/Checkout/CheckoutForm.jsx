@@ -118,7 +118,7 @@ const CheckoutForm = () => {
                 const { data: { key } } = await axios.get(`${process.env.REACT_APP_GET_KEY}`)
                 const { data } = await axios.post(`${process.env.REACT_APP_GET_CHECKOUT}`, {
                     amount: totalAmount,
-                    productDetails: JSON.stringify(cart),
+                    productDetails: cart,
                     userId: userData._id,
                     userDetails: JSON.stringify(userDetails),
                     paymentMethod: 'online',

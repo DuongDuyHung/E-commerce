@@ -14,9 +14,9 @@ const CartList = ({ product, removeFromWishlist }) => {
                         <img alt={product?.name} loading='lazy'   src={`http://localhost:3000${product.imgURL}`} className={styles.img} />
                     </Box>
                     <CardContent>
-                        <Typography gutterBottom variant="h6" sx={{ textAlign: "center" }}>
-                            {product?.name.length > 20 ? product?.name.slice(0, 20) + '...' : product?.name}
-                        </Typography>
+                    <Typography gutterBottom variant="h6" sx={{ textAlign: "center" }}>
+  {product?.name?.length > 20 ? product.name.slice(0, 20) + '...' : product?.name || ''}
+</Typography>
                         <Typography gutterBottom variant="h6" sx={{ textAlign: "center" }}>
                                 {product?.price} đồng
                             </Typography>

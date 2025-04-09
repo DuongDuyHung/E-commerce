@@ -30,7 +30,7 @@ const Cart = () => {
     const [openAlert, setOpenAlert] = useState(false);
     const [previousOrder, setPreviousOrder] = useState([]);
     let shippingCoast = 100
-
+    const [isLoading, setIsLoading] = useState(true);
 
     const navigate = useNavigate()
     let authToken = localStorage.getItem('Authorization')
@@ -38,14 +38,15 @@ const Cart = () => {
 
 
     useEffect(() => {
-        if (authToken) {
+        const token = localStorage.getItem('Authorization');
+        if (token) {
             getCart();
             getPreviousOrder();
         } else {
             setOpenAlert(true);
         }
-        window.scroll(0, 0);
-    }, [authToken]);
+        window.scrollTo(0, 0);
+    }, []);
 
     useEffect(() => {
         if (setProceed) {
@@ -58,39 +59,43 @@ const Cart = () => {
 
     const calculateSubtotal = () => {
         let total = 0;
-        cart.forEach(item => {
-            if (item.product && item.product.price) {
-                total += item.product.price * item.quantity;
-            }
-        });
+        if (Array.isArray(cart)) {
+            cart.forEach(item => {
+                if (item.product && item.product.price) {
+                    total += item.product.price * item.quantity;
+                }
+            });
+        } else {
+            console.warn("Cart is not an array:", cart);
+        }
         return total;
     };
 
     const getCart = async () => {
-        if (setProceed) {
-            const userId = localStorage.getItem('userId'); 
-            if (!userId) {
-                toast.error("User ID not found. Please log in again.", { autoClose: 500, theme: 'colored' });
-                navigate('/login');
-                return;
-            }
+        setIsLoading(true);
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+            toast.error("User ID not found. Please log in again.", { autoClose: 500, theme: 'colored' });
+            navigate('/login');
+            return;
+        }
     
-            try {
-                const { data } = await axios.get(`http://localhost:3000/cart/${userId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`
-                    }
-                });
+        try {
+            const { data } = await axios.get(`http://localhost:3000/cart/${userId}`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
     
-                // ✅ Chỉ lấy cart items
-                setCart(data.cart?.items || []);
-                console.log("Cart data: ", data.cart?.items)
-            } catch (err) {
-                toast.error("Failed to fetch cart", { autoClose: 500, theme: 'colored' });
-                console.error(err);
-            }
+            setCart(data.cart?.items || []);
+        } catch (err) {
+            toast.error("Failed to fetch cart", { autoClose: 500, theme: 'colored' });
+            console.error(err);
+        } finally {
+            setIsLoading(false);
         }
     }
+    
 
     const updateQuantity = async (productId, quantity) => {
         try {
@@ -166,41 +171,56 @@ const Cart = () => {
             <CssBaseline />
             <Container fixed maxWidth >
 
-                <Typography variant='h3' sx={{ textAlign: 'center', marginTop: 10, color: '#1976d2', fontWeight: 'bold' }}>Cart</Typography>
-                {
-                    setProceed &&
-                    cart.length <= 0 &&
-                    <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        <div className="main-card">
-                            <img src={EmptyCart} alt="Empty_cart" className="empty-cart-img" />
-                            <Typography variant='h6' sx={{ textAlign: 'center', color: '#1976d2', fontWeight: 'bold' }}>Your Cart is Empty</Typography>
-                        </div>
-                    </Box>
+            {isLoading ? (
+    <Typography variant="h6" sx={{ textAlign: 'center', mt: 5 }}>Loading cart...</Typography>
+) : (
+    <>
+        {setProceed && cart.length === 0 ? (
+            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <div className="main-card">
+                    <img src={EmptyCart} alt="Empty_cart" className="empty-cart-img" />
+                    <Typography variant='h6' sx={{ textAlign: 'center', color: '#1976d2', fontWeight: 'bold' }}>Your Cart is Empty</Typography>
+                </div>
+            </Box>
+        ) : (
+            <>
+                {/* Render Cart Items và Order Summary ở đây */}
+            </>
+        )}
+    </>
+)}
+              <Container sx={{ display: 'flex', flexDirection: "column", mb: 10 }}>
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+        {
+            isLoading ? (
+                <Typography variant="h6" sx={{ textAlign: 'center', mt: 5 }}>Loading cart...</Typography>
+            ) : (
+                cart.length > 0 &&
+                cart.map(product =>
+                    <CartCard
+                        product={product}
+                        removeFromCart={removeFromCart}
+                        updateQuantity={updateQuantity}
+                        key={product._id}
+                    />
+                )
+            )
+        }
+    </Box>
 
-                }
-                <Container sx={{ display: 'flex', flexDirection: "column", mb: 10 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
-                        {
-                            cart.length > 0 &&
-                            cart.map(product =>
-                                <CartCard product={product} removeFromCart={removeFromCart} updateQuantity={updateQuantity} key={product._id} />
+    {
+        !isLoading && cart.length > 0 &&
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <OrderSummary
+                proceedToCheckout={proceedToCheckout}
+                total={total}
+                shippingCoast={shippingCoast}
+                subtotal={total - shippingCoast}
+            />
+        </Box>
+    }
+</Container>
 
-                            )}
-                    </Box>
-
-                    {
-                        cart.length > 0 &&
-                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                          <OrderSummary
-  proceedToCheckout={proceedToCheckout}
-  total={total}
-  shippingCoast={shippingCoast}
-  subtotal={total - shippingCoast}
-/>
-                        </Box>
-                    }
-
-                </Container>
             </Container>
             {setProceed && previousOrder.length > 0 && <Typography variant='h6' sx={{ textAlign: 'center', margin: "5px 0" }}>Previous Orders</Typography>}
             <Container maxWidth='xl' style={{ marginTop: 10, display: "flex", justifyContent: 'center', flexWrap: "wrap", paddingBottom: 20 }}>
