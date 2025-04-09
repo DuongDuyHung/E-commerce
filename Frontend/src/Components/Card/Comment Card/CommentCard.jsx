@@ -98,7 +98,9 @@ const CommentCard = ({ userReview, setReviews, reviews, fetchReviews }) => {
                 <Avatar alt="Customer Avatar" />
             </Grid>
             <Grid justifyContent="left" item xs zeroMinWidth >
-                <h4 style={{ margin: 0, textAlign: "left" }}>{userReview?.user?.firstName + ' ' + userReview?.user?.lastName}</h4>
+            <h4 style={{ margin: 0, textAlign: "left" }}>
+  {userReview?.user?.username}
+</h4>
                 <p style={{ textAlign: "left", marginTop: 10 }}>
                     {!edit && <Rating name="read-only" value={userReview.rating} readOnly precision={0.5} />}
                     {edit &&
