@@ -27,7 +27,7 @@ router.get('/', async function (req, res, next) {
             objQuery.price.$lte = 10000;
         }
     } else {
-        objQuery.price.$lte = 10000;
+        objQuery.price.$lte = 1000000;
         objQuery.price.$gte = 0;
     }
 
