@@ -3,9 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { Container } from '@mui/system'
-import { Box, Button, MenuItem, FormControl, Select } from '@mui/material'
-import Pagination from '@mui/material/Pagination'
-import Stack from '@mui/material/Stack'
+import { Box, Button, MenuItem, FormControl, Select, Pagination } from '@mui/material'
 import Loading from '../Components/loading/Loading'
 import { BiFilterAlt } from 'react-icons/bi'
 import ProductCard from '../Components/Card/Product Card/ProductCard'
@@ -17,15 +15,15 @@ const SingleCategory = () => {
     const [filterOption, setFilterOption] = useState('All')
     const [title, setTitle] = useState('All')
     const [currentPage, setCurrentPage] = useState(1)
-    const productsPerPage = 8
 
     const { cat } = useParams()
     const navigate = useNavigate()
+    const productsPerPage = 8
 
     useEffect(() => {
-        setCurrentPage(1) // Reset về trang đầu khi thay đổi category
         getCategoryProduct()
         window.scroll(0, 0)
+        setCurrentPage(1)
     }, [cat])
 
     const getCategoryProduct = async () => {
@@ -42,7 +40,6 @@ const SingleCategory = () => {
     }
 
     const productFilter = []
-
     if (cat === 'book') {
         productFilter.push('All', 'Scifi', 'Business', 'Mystery', 'Cookbooks', 'Accessories', 'Price Low To High', 'Price High To Low', 'High Rated', 'Low Rated')
     } else if (cat === 'cloths') {
@@ -58,10 +55,10 @@ const SingleCategory = () => {
     const handleChange = (e) => {
         setFilterOption(e.target.value.split(" ").join("").toLowerCase())
         setTitle(e.target.value)
+        setCurrentPage(1)
     }
 
     const getData = async () => {
-        setCurrentPage(1) // Reset về trang đầu khi thay đổi filter
         setIsLoading(true)
         const filter = filterOption.toLowerCase()
         const { data } = await axios.post(`${process.env.REACT_APP_PRODUCT_TYPE_CATEGORY_}`, {
@@ -79,21 +76,10 @@ const SingleCategory = () => {
     const indexOfLastProduct = currentPage * productsPerPage
     const indexOfFirstProduct = indexOfLastProduct - productsPerPage
     const currentProducts = productData.slice(indexOfFirstProduct, indexOfLastProduct)
-
-    const handlePageChange = (event, value) => {
-        setCurrentPage(value)
-        window.scrollTo(0, 0)
-    }
+    const totalPages = Math.ceil(productData.length / productsPerPage)
 
     const loading = isLoading ? (
-        <Container maxWidth='xl' style={{
-            marginTop: 10,
-            display: "flex",
-            justifyContent: "center",
-            flexWrap: "wrap",
-            paddingLeft: 10,
-            paddingBottom: 20
-        }}>
+        <Container maxWidth='xl' style={{ marginTop: 10, display: "flex", justifyContent: "center", flexWrap: "wrap", paddingLeft: 10, paddingBottom: 20 }}>
             <Loading /><Loading /><Loading /><Loading />
             <Loading /><Loading /><Loading /><Loading />
         </Container>
@@ -114,16 +100,15 @@ const SingleCategory = () => {
                 >
                     Quay lại
                 </Button>
+
                 <Box sx={{ minWidth: 140 }}>
                     <FormControl sx={{ width: 140 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, width: "80vw" }}>
                             <Button endIcon={<BiFilterAlt />}>Filters</Button>
                             <Select
-                                labelId="demo-simple-select-label"
-                                id="demo-simple-select"
                                 value={title}
                                 sx={{ width: 200 }}
-                                onChange={(e) => handleChange(e)}
+                                onChange={handleChange}
                             >
                                 {productFilter.map(prod => (
                                     <MenuItem key={prod} value={prod}>{prod}</MenuItem>
@@ -132,16 +117,10 @@ const SingleCategory = () => {
                         </Box>
                     </FormControl>
                 </Box>
+
                 {loading}
-                <Container maxWidth='xl' style={{
-                    marginTop: 10,
-                    display: "flex",
-                    justifyContent: 'center',
-                    flexWrap: "wrap",
-                    paddingBottom: 20,
-                    marginBottom: 30,
-                    width: '100%'
-                }}>
+
+                <Container maxWidth='xl' style={{ marginTop: 10, display: "flex", justifyContent: 'center', flexWrap: "wrap", paddingBottom: 20, marginBottom: 30, width: '100%' }}>
                     {currentProducts.map(prod => (
                         <Link to={`/Detail/type/${cat}/${prod._id}`} key={prod._id}>
                             <ProductCard prod={prod} />
@@ -149,15 +128,17 @@ const SingleCategory = () => {
                     ))}
                 </Container>
 
-                <Stack spacing={2} alignItems="center" mt={2}>
+                {/* Pagination */}
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
                     <Pagination
-                        count={Math.ceil(productData.length / productsPerPage)}
+                        count={totalPages}
                         page={currentPage}
-                        onChange={handlePageChange}
+                        onChange={(e, value) => setCurrentPage(value)}
                         color="primary"
                     />
-                </Stack>
+                </Box>
             </Container>
+
             <CopyRight sx={{ mt: 8, mb: 10 }} />
         </>
     )
